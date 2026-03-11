@@ -8,6 +8,7 @@ type JewelleryItem = {
   metalId: string | null;
   metalName: string | null;
   categoryId: string | null;
+  categoryName: string | null;
   subCategoryId: string | null;
   subCategoryName: string | null;
   subCategoryMakePrice: number | null;
@@ -141,7 +142,12 @@ export default function AdminJewelleryPage() {
       const parents: CategoryOption[] = await parentsRes.json();
       const subs: CategoryOption[] = await subsRes.json();
 
-      setCategories([...parents, ...subs]);
+      const combined = [...parents, ...subs];
+      const dedupedById = Array.from(
+        new Map(combined.map((cat) => [cat.id, cat])).values()
+      );
+
+      setCategories(dedupedById);
     } catch (err) {
       console.error(err);
     }
@@ -512,8 +518,7 @@ export default function AdminJewelleryPage() {
                       {item.metalName || "—"}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
-                      {/* Category name is not populated; fallback to ID or placeholder */}
-                      {item.categoryId || "—"}
+                      {item.categoryName || "—"}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
                       {item.subCategoryName || "—"}
@@ -522,7 +527,7 @@ export default function AdminJewelleryPage() {
                       {item.weight} {item.unit}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-900">
-                      ₹{item.finalPrice.toLocaleString(undefined, {
+                      CA${item.finalPrice.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -618,7 +623,7 @@ export default function AdminJewelleryPage() {
                     <option value="">Select metal</option>
                     {metals.map((metal) => (
                       <option key={metal.id} value={metal.id}>
-                        {metal.name} (₹
+                        {metal.name} (CA$
                         {metal.basePrice.toLocaleString()})
                       </option>
                     ))}
@@ -651,7 +656,7 @@ export default function AdminJewelleryPage() {
                     <span>Sub Category</span>
                     {selectedSubCategory && typeof selectedSubCategory.makePrice === "number" && (
                       <span className="ml-2 inline-flex items-center rounded-full bg-[#B8860B]/10 px-2 py-0.5 text-[10px] font-medium text-[#B8860B]">
-                        Make Price: ₹
+                        Make Price: CA$
                         {selectedSubCategory.makePrice.toLocaleString()}
                       </span>
                     )}
@@ -692,7 +697,7 @@ export default function AdminJewelleryPage() {
                   {form.includeStonePrice && (
                     <div className="relative rounded-md shadow-sm mt-1">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <span className="text-sm text-gray-500">₹</span>
+                    <span className="text-sm text-gray-500">CA$</span>
                       </div>
                       <input
                         type="number"
@@ -889,7 +894,7 @@ export default function AdminJewelleryPage() {
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center justify-between rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
+                  <div className="mt-2 flex items-center justify-between rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
                 <div>
                   <div className="text-xs font-medium text-gray-700">
                     Estimated Final Price
@@ -902,7 +907,7 @@ export default function AdminJewelleryPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold text-gray-900">
-                    ₹
+                    CA$
                     {estimatedFinalPrice.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,

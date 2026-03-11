@@ -3,15 +3,13 @@ import { connectDB } from "@/lib/db";
 import Metal from "../../../../../../lib/models/Metal";
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     if (

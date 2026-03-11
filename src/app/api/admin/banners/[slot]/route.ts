@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import { promises as fs } from "fs";
 import { connectDB } from "@/lib/db";
 import Banner, { BannerSlot } from "@/models/Banner";
+import { uploadImageToCloudinary } from "../../../../../../lib/cloudinary";
+
+type RouteContext = {
+  params: Promise<{ slot: string }>;
+};
 
 const VALID_SLOTS: BannerSlot[] = ["header", "middle1", "middle2"];
 
@@ -12,9 +15,9 @@ function isValidSlot(slot: string): slot is BannerSlot {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slot: string } }
+  { params }: RouteContext
 ) {
-  const { slot } = params;
+  const { slot } = await params;
 
   if (!isValidSlot(slot)) {
     return NextResponse.json(
@@ -37,27 +40,10 @@ export async function PUT(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "banners"
-    );
-
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    const originalName =
-      typeof file.name === "string" && file.name
-        ? file.name
-        : "banner-image";
-    const ext = path.extname(originalName) || ".png";
-
-    const filename = `${slot}-${Date.now()}${ext}`;
-    const filePath = path.join(uploadDir, filename);
-
-    await fs.writeFile(filePath, buffer);
-
-    const imageUrl = `/uploads/banners/${filename}`;
+    const imageUrl = await uploadImageToCloudinary(buffer, {
+      folder: "reverdale/banners",
+      publicIdPrefix: slot,
+    });
 
     await connectDB();
 

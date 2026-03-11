@@ -3,9 +3,8 @@ import { connectDB } from "@/lib/db";
 import Product from "../../../../../../lib/models/Product";
 import Metal from "../../../../../../lib/models/Metal";
 import Category from "../../../../../../lib/models/Category";
-import {
-  calculateProductPrice,
-} from "../../../../../../lib/priceUtils";
+import { calculateProductPrice } from "../../../../../../lib/priceUtils";
+import { uploadImageToCloudinary } from "../../../../../../lib/cloudinary";
 
 type RouteContext = {
   params: {
@@ -69,6 +68,23 @@ export async function PUT(request: Request, { params }: RouteContext) {
       weight
     );
 
+    let imageUrl = updates.imageUrl ?? existing.imageUrl;
+
+    if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
+      try {
+        imageUrl = await uploadImageToCloudinary(imageUrl, {
+          folder: "reverdale/products",
+          publicIdPrefix: "product",
+        });
+      } catch (uploadError) {
+        console.error("Error uploading product image to Cloudinary", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload product image" },
+          { status: 500 }
+        );
+      }
+    }
+
     const updated = await Product.findByIdAndUpdate(
       id,
       {
@@ -76,6 +92,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
         metalId,
         subCategoryId,
         weight,
+        imageUrl,
         finalPrice,
       },
       {
@@ -84,6 +101,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       }
     )
       .populate("metalId", "name basePrice")
+      .populate("categoryId", "name")
       .populate("subCategoryId", "name makePrice");
 
     if (!updated) {
@@ -100,7 +118,11 @@ export async function PUT(request: Request, { params }: RouteContext) {
           null,
         metalName: (updated as any).metalId?.name ?? null,
         metalBasePrice: (updated as any).metalId?.basePrice ?? null,
-        categoryId: updated.categoryId?.toString() ?? null,
+        categoryId:
+          (updated as any).categoryId?._id?.toString() ??
+          (updated as any).categoryId?.toString() ??
+          null,
+        categoryName: (updated as any).categoryId?.name ?? null,
         subCategoryId:
           (updated as any).subCategoryId?._id?.toString() ??
           (updated as any).subCategoryId?.toString() ??

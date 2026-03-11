@@ -3,11 +3,10 @@ import { connectDB } from "@/lib/db";
 import Jewellery from "../../../../../../lib/models/Jewellery";
 import Metal from "../../../../../../lib/models/Metal";
 import Category from "../../../../../../lib/models/Category";
+import { uploadImageToCloudinary } from "../../../../../../lib/cloudinary";
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 type CalculateFinalPriceArgs = {
@@ -68,7 +67,7 @@ async function calculateFinalPrice({
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     const existing = await Jewellery.findById(id);
@@ -129,6 +128,23 @@ export async function PUT(request: Request, { params }: RouteContext) {
       taxPercent,
     });
 
+    let imageUrl = updates.imageUrl ?? existing.imageUrl;
+
+    if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
+      try {
+        imageUrl = await uploadImageToCloudinary(imageUrl, {
+          folder: "reverdale/jewellery",
+          publicIdPrefix: "jewellery",
+        });
+      } catch (uploadError) {
+        console.error("Error uploading jewellery image to Cloudinary", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload jewellery image" },
+          { status: 500 }
+        );
+      }
+    }
+
     const updated = await Jewellery.findByIdAndUpdate(
       id,
       {
@@ -138,6 +154,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
         stonePrice,
         taxIncluded,
         taxPercent,
+        imageUrl,
         finalPrice,
       },
       {
@@ -146,6 +163,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       }
     )
       .populate("metalId", "name basePrice")
+      .populate("categoryId", "name")
       .populate("subCategoryId", "name makePrice");
 
     if (!updated) {
@@ -159,7 +177,9 @@ export async function PUT(request: Request, { params }: RouteContext) {
         metalId: updated.metalId?._id?.toString() ?? updated.metalId?.toString() ?? null,
         metalName: (updated as any).metalId?.name ?? null,
         metalBasePrice: (updated as any).metalId?.basePrice ?? null,
-        categoryId: updated.categoryId?.toString() ?? null,
+        categoryId:
+          updated.categoryId?._id?.toString() ?? updated.categoryId?.toString() ?? null,
+        categoryName: (updated as any).categoryId?.name ?? null,
         subCategoryId:
           updated.subCategoryId?._id?.toString() ??
           updated.subCategoryId?.toString() ??
@@ -193,7 +213,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const deleted = await Jewellery.findByIdAndDelete(id);
 

@@ -4,15 +4,13 @@ import Category from "../../../../../../lib/models/Category";
 import Jewellery from "../../../../../../lib/models/Jewellery";
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     const updated = await Category.findByIdAndUpdate(id, updates, {
@@ -40,7 +38,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const category = await Category.findById(id);
 

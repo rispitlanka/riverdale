@@ -19,7 +19,7 @@ const BannerSchema = new Schema<BannerDocument>(
     },
     imageUrl: {
       type: String,
-      required: true,
+      required: false,
       default: "",
     },
   },

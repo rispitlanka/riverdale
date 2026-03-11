@@ -1,0 +1,263 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import LiveGoldPrice from '@/components/LiveGoldPrice';
+import { Shield, Award, Truck, TrendingUp } from 'lucide-react';
+import { IMetal } from '@/types';
+import { formatCurrency } from '@/lib/utils';
+
+export default function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState<IMetal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await fetch('/api/metals');
+      const data = await response.json();
+      // Get first 4 active in-stock products
+      const featured = data.filter((metal: IMetal) => 
+        metal.isActive && metal.stockStatus === 'in-stock'
+      ).slice(0, 4);
+      setFeaturedProducts(featured);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="relative">
+      {/* Hero Section with Live Prices */}
+      <section className="relative py-20 lg:py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Hero Content */}
+            <div>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                Invest in <span className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">Precious Metals</span> with Confidence
+              </h1>
+              <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed">
+                Buy and sell gold, silver, platinum, and palladium at competitive prices. Secure your financial future with tangible assets.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/products">
+                  <Button size="lg" className="w-full sm:w-auto text-lg px-10 py-6 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold shadow-lg shadow-yellow-500/50 transition-all duration-300">
+                    Browse Products →
+                  </Button>
+                </Link>
+                <Link href="/sell">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-10 py-6 border-2 border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black font-semibold transition-all duration-300">
+                    Sell Your Metals
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Side - Live Metal Prices */}
+            <div>
+              <LiveGoldPrice />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-20 bg-gradient-to-b from-transparent to-black/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Why Choose Us?
+            </h2>
+            <p className="text-xl text-gray-400">
+              The most trusted platform for precious metal transactions
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Secure Transactions */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300">
+              <CardContent className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 mb-6">
+                  <Shield className="w-8 h-8 text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Secure Transactions</h3>
+                <p className="text-gray-400">
+                  Bank-level encryption and secure payment processing
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Certified Quality */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300">
+              <CardContent className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 mb-6">
+                  <Award className="w-8 h-8 text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Certified Quality</h3>
+                <p className="text-gray-400">
+                  All products certified for purity and authenticity
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Fast Delivery */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300">
+              <CardContent className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 mb-6">
+                  <Truck className="w-8 h-8 text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Fast Delivery</h3>
+                <p className="text-gray-400">
+                  Insured shipping with tracking to your doorstep
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Best Prices */}
+            <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300">
+              <CardContent className="p-8 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 mb-6">
+                  <TrendingUp className="w-8 h-8 text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Best Prices</h3>
+                <p className="text-gray-400">
+                  Competitive pricing updated with real-time market rates
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Featured Products
+            </h2>
+            <p className="text-xl text-gray-400">
+              Handpicked selection of premium precious metals
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="bg-gradient-to-b from-gray-900 to-gray-800 border-yellow-500/20 animate-pulse">
+                  <div className="aspect-square bg-gray-800"></div>
+                  <CardContent className="p-6 space-y-3">
+                    <div className="h-4 bg-gray-700 rounded w-1/3"></div>
+                    <div className="h-6 bg-gray-700 rounded"></div>
+                    <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                    <div className="h-8 bg-gray-700 rounded w-1/2"></div>
+                    <div className="h-10 bg-gray-700 rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {featuredProducts.map((product) => {
+                const totalPrice = product.pricePerGram * product.weight;
+                const categoryName = typeof product.category === 'object' ? product.category.name : '';
+                
+                return (
+                  <Card key={product._id} className="bg-gradient-to-b from-gray-900 to-gray-800 border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 group overflow-hidden">
+                    <div className="aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
+                      {product.images && product.images.length > 0 ? (
+                        <Image
+                          src={product.images[0]}
+                          alt={product.name}
+                          width={400}
+                          height={400}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-6xl">💎</span>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-6">
+                      {categoryName && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                          <span className="text-sm font-semibold text-yellow-400">{categoryName}</span>
+                        </div>
+                      )}
+                      <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 min-h-[3.5rem]">
+                        {product.name}
+                      </h3>
+                      <p className="text-sm text-gray-400 mb-4">
+                        {product.purity} • {product.weight}{product.weightUnit}
+                      </p>
+                      <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-2xl font-bold text-white">
+                          {formatCurrency(totalPrice)}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          ({formatCurrency(product.pricePerGram)}/{product.weightUnit})
+                        </span>
+                      </div>
+                      <Link href="/products">
+                        <Button className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold">
+                          View Details
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg mb-6">No products available at the moment.</p>
+              <Link href="/sell">
+                <Button className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold">
+                  Sell Your Metals
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          <div className="text-center">
+            <Link href="/products">
+              <Button variant="outline" size="lg" className="border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black font-semibold px-12">
+                View All Products
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-yellow-600/5 to-yellow-500/10"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            Ready to Start Your Investment Journey?
+          </h2>
+          <p className="text-xl mb-10 text-gray-300">
+            Join thousands of satisfied customers who trust us with their precious metal investments
+          </p>
+          <Link href="/sell">
+            <Button size="lg" className="text-xl px-12 py-7 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold shadow-2xl shadow-yellow-500/50 transition-all duration-300 transform hover:scale-105">
+              Create Free Account
+            </Button>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

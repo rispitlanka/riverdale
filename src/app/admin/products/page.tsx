@@ -8,6 +8,7 @@ type ProductItem = {
   metalId: string | null;
   metalName: string | null;
   categoryId: string | null;
+  categoryName: string | null;
   subCategoryId: string | null;
   subCategoryName: string | null;
   subCategoryMakePrice: number | null;
@@ -129,7 +130,12 @@ export default function AdminProductsPage() {
       const parents: CategoryOption[] = await parentsRes.json();
       const subs: CategoryOption[] = await subsRes.json();
 
-      setCategories([...parents, ...subs]);
+      const combined = [...parents, ...subs];
+      const dedupedById = Array.from(
+        new Map(combined.map((cat) => [cat.id, cat])).values()
+      );
+
+      setCategories(dedupedById);
     } catch (err) {
       console.error(err);
     }
@@ -454,7 +460,7 @@ export default function AdminProductsPage() {
                       {item.metalName || "—"}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
-                      {item.categoryId || "—"}
+                      {item.categoryName || "—"}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
                       {item.subCategoryName || "—"}
@@ -463,7 +469,7 @@ export default function AdminProductsPage() {
                       {item.weight} {item.unit}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-900">
-                      ₹
+                      CA$
                       {item.finalPrice.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -562,7 +568,7 @@ export default function AdminProductsPage() {
                     <option value="">Select metal</option>
                     {metals.map((metal) => (
                       <option key={metal.id} value={metal.id}>
-                        {metal.name} (₹
+                        {metal.name} (CA$
                         {metal.basePrice.toLocaleString()})
                       </option>
                     ))}
@@ -596,7 +602,7 @@ export default function AdminProductsPage() {
                     {selectedSubCategory &&
                       typeof selectedSubCategory.makePrice === "number" && (
                         <span className="ml-2 inline-flex items-center rounded-full bg-[#B8860B]/10 px-2 py-0.5 text-[10px] font-medium text-[#B8860B]">
-                          Make Price: ₹
+                          Make Price: CA$
                           {selectedSubCategory.makePrice.toLocaleString()}
                         </span>
                       )}
@@ -767,7 +773,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold text-gray-900">
-                    ₹
+                    CA$
                     {estimatedFinalPrice.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,

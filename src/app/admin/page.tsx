@@ -100,7 +100,7 @@ export default async function AdminDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-gray-900">
-                        ₹{purchase.totalAmount.toLocaleString()}
+                        CA${purchase.totalAmount.toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500">
                         {formatDate(purchase.date)}

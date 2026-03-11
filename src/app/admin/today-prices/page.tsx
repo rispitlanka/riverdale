@@ -209,13 +209,13 @@ export default function TodayPriceManagementPage() {
                       <td className="px-4 py-3 align-middle text-sm text-gray-900">
                         {row.name}
                         <div className="text-xs text-gray-400">
-                          Base price: ₹{row.basePrice.toLocaleString()}
+                          Base price: CA${row.basePrice.toLocaleString()}
                         </div>
                       </td>
                       <td className="px-4 py-3 align-middle text-sm text-gray-900">
                         <div className="relative max-w-xs">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span className="text-xs text-gray-500">₹</span>
+                            <span className="text-xs text-gray-500">CA$</span>
                           </div>
                           <input
                             type="number"
@@ -225,7 +225,7 @@ export default function TodayPriceManagementPage() {
                             onChange={(e) =>
                               handlePriceChange(row.metalId, e.target.value)
                             }
-                            className="block w-full rounded-md border border-gray-300 pl-6 pr-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                            className="block w-full rounded-md border border-gray-300 pl-12 pr-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
                             placeholder="Enter price"
                           />
                         </div>

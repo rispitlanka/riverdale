@@ -185,7 +185,7 @@ export default function BulkMetalPriceUpdatePage() {
               </option>
               {metals.map((metal) => (
                 <option key={metal.id} value={metal.id}>
-                  {metal.name} — ₹{metal.basePrice.toLocaleString()}
+                  {metal.name} — CA${metal.basePrice.toLocaleString()}
                 </option>
               ))}
             </select>
@@ -254,11 +254,11 @@ export default function BulkMetalPriceUpdatePage() {
                 <span className="font-semibold">{selectedMetal.name}</span> price
                 from{" "}
                 <span className="font-semibold">
-                  ₹{selectedMetal.basePrice.toLocaleString()}
+                  CA${selectedMetal.basePrice.toLocaleString()}
                 </span>{" "}
                 to{" "}
                 <span className="font-semibold text-gray-900">
-                  ₹{previewNewPrice.toLocaleString()}
+                  CA${previewNewPrice.toLocaleString()}
                 </span>
                 .
               </p>
@@ -315,13 +315,13 @@ export default function BulkMetalPriceUpdatePage() {
               {previewNewPrice !== null && (
                 <p>
                   This will change the price from{" "}
-                  <span className="font-semibold">
-                    ₹{selectedMetal.basePrice.toLocaleString()}
-                  </span>{" "}
+                    <span className="font-semibold">
+                      CA${selectedMetal.basePrice.toLocaleString()}
+                    </span>{" "}
                   to{" "}
-                  <span className="font-semibold text-gray-900">
-                    ₹{previewNewPrice.toLocaleString()}
-                  </span>
+                    <span className="font-semibold text-gray-900">
+                      CA${previewNewPrice.toLocaleString()}
+                    </span>
                   .
                 </p>
               )}

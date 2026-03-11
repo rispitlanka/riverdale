@@ -67,7 +67,13 @@ export default function AdminCategoriesPage() {
         throw new Error("Failed to load categories");
       }
       const data: Category[] = await res.json();
-      setCategories(data);
+
+      // Ensure no duplicate IDs to avoid React key collisions
+      const dedupedById = Array.from(
+        new Map(data.map((cat) => [cat.id, cat])).values()
+      );
+
+      setCategories(dedupedById);
     } catch (err) {
       console.error(err);
       setError("Unable to load categories. Please try again.");
@@ -361,7 +367,7 @@ export default function AdminCategoriesPage() {
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
                       {category.type === "sub" && category.makePrice != null
-                        ? `₹${category.makePrice.toLocaleString()}`
+                        ? `CA$${category.makePrice.toLocaleString()}`
                         : "—"}
                     </td>
                     <td className="px-4 py-3 align-middle">

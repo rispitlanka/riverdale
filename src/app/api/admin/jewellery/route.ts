@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import Jewellery from "../../../../../lib/models/Jewellery";
 import Metal from "../../../../../lib/models/Metal";
 import Category from "../../../../../lib/models/Category";
+import { uploadImageToCloudinary } from "../../../../../lib/cloudinary";
 
 type CalculateFinalPriceArgs = {
   metalId: string;
@@ -65,6 +66,7 @@ export async function GET() {
 
     const items = await Jewellery.find()
       .populate("metalId", "name basePrice")
+      .populate("categoryId", "name")
       .populate("subCategoryId", "name makePrice")
       .lean();
 
@@ -74,7 +76,9 @@ export async function GET() {
       metalId: item.metalId?._id?.toString() ?? item.metalId?.toString() ?? null,
       metalName: item.metalId?.name ?? null,
       metalBasePrice: item.metalId?.basePrice ?? null,
-      categoryId: item.categoryId?.toString() ?? null,
+      categoryId:
+        item.categoryId?._id?.toString() ?? item.categoryId?.toString() ?? null,
+      categoryName: item.categoryId?.name ?? null,
       subCategoryId:
         item.subCategoryId?._id?.toString() ?? item.subCategoryId?.toString() ?? null,
       subCategoryName: item.subCategoryId?.name ?? null,
@@ -169,6 +173,23 @@ export async function POST(request: Request) {
       taxPercent,
     });
 
+    let finalImageUrl: string | undefined = imageUrl;
+
+    if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
+      try {
+        finalImageUrl = await uploadImageToCloudinary(imageUrl, {
+          folder: "reverdale/jewellery",
+          publicIdPrefix: "jewellery",
+        });
+      } catch (uploadError) {
+        console.error("Error uploading jewellery image to Cloudinary", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload jewellery image" },
+          { status: 500 }
+        );
+      }
+    }
+
     const jewellery = await Jewellery.create({
       name,
       metalId,
@@ -179,7 +200,7 @@ export async function POST(request: Request) {
       purity,
       unit,
       description,
-      imageUrl,
+      imageUrl: finalImageUrl,
       inStock,
       taxIncluded,
       taxPercent,
@@ -187,6 +208,7 @@ export async function POST(request: Request) {
     });
     
     await jewellery.populate({ path: "metalId", select: "name basePrice" });
+    await jewellery.populate({ path: "categoryId", select: "name" });
     await jewellery.populate({ path: "subCategoryId", select: "name makePrice" });
     const created = jewellery;
 
@@ -197,7 +219,9 @@ export async function POST(request: Request) {
         metalId: created.metalId?._id?.toString() ?? created.metalId?.toString() ?? null,
         metalName: (created as any).metalId?.name ?? null,
         metalBasePrice: (created as any).metalId?.basePrice ?? null,
-        categoryId: created.categoryId?.toString() ?? null,
+        categoryId:
+          created.categoryId?._id?.toString() ?? created.categoryId?.toString() ?? null,
+        categoryName: (created as any).categoryId?.name ?? null,
         subCategoryId:
           created.subCategoryId?._id?.toString() ??
           created.subCategoryId?.toString() ??

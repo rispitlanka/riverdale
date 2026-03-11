@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "cloudinary": "^2.9.0",
     "mongodb": "^7.1.0",
     "mongoose": "^8.9.5",
     "next": "16.1.6",

@@ -329,7 +329,7 @@ export default function AdminOrdersPage() {
                       {order.customerPhone}
                     </td>
                     <td className="px-4 py-3 align-middle text-right text-sm text-gray-900">
-                      ₹
+                      CA$
                       {order.totalAmount.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,

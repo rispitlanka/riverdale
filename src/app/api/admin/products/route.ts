@@ -3,9 +3,8 @@ import { connectDB } from "@/lib/db";
 import Product from "../../../../../lib/models/Product";
 import Metal from "../../../../../lib/models/Metal";
 import Category from "../../../../../lib/models/Category";
-import {
-  calculateProductPrice,
-} from "../../../../../lib/priceUtils";
+import { calculateProductPrice } from "../../../../../lib/priceUtils";
+import { uploadImageToCloudinary } from "../../../../../lib/cloudinary";
 
 export async function GET() {
   try {
@@ -13,6 +12,7 @@ export async function GET() {
 
     const items = await Product.find()
       .populate("metalId", "name basePrice")
+      .populate("categoryId", "name")
       .populate("subCategoryId", "name makePrice")
       .lean();
 
@@ -22,7 +22,9 @@ export async function GET() {
       metalId: item.metalId?._id?.toString() ?? item.metalId?.toString() ?? null,
       metalName: item.metalId?.name ?? null,
       metalBasePrice: item.metalId?.basePrice ?? null,
-      categoryId: item.categoryId?.toString() ?? null,
+      categoryId:
+        item.categoryId?._id?.toString() ?? item.categoryId?.toString() ?? null,
+      categoryName: item.categoryId?.name ?? null,
       subCategoryId:
         item.subCategoryId?._id?.toString() ?? item.subCategoryId?.toString() ?? null,
       subCategoryName: item.subCategoryId?.name ?? null,
@@ -111,6 +113,23 @@ export async function POST(request: Request) {
       weight
     );
 
+    let finalImageUrl: string | undefined = imageUrl;
+
+    if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
+      try {
+        finalImageUrl = await uploadImageToCloudinary(imageUrl, {
+          folder: "reverdale/products",
+          publicIdPrefix: "product",
+        });
+      } catch (uploadError) {
+        console.error("Error uploading product image to Cloudinary", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload product image" },
+          { status: 500 }
+        );
+      }
+    }
+
     const product = await Product.create({
       name,
       metalId,
@@ -120,14 +139,16 @@ export async function POST(request: Request) {
       purity,
       unit,
       description,
-      imageUrl,
+      imageUrl: finalImageUrl,
       inStock,
       finalPrice,
     });
 
-    const created = await product
-      .populate("metalId", "name basePrice")
-      .populate("subCategoryId", "name makePrice");
+    await product.populate("metalId", "name basePrice");
+    await product.populate("categoryId", "name");
+    await product.populate("subCategoryId", "name makePrice");
+
+    const created = product;
 
     return NextResponse.json(
       {
@@ -139,7 +160,8 @@ export async function POST(request: Request) {
           null,
         metalName: (created as any).metalId?.name ?? null,
         metalBasePrice: (created as any).metalId?.basePrice ?? null,
-        categoryId: created.categoryId?.toString() ?? null,
+        categoryId: created.categoryId?._id?.toString() ?? created.categoryId?.toString() ?? null,
+        categoryName: (created as any).categoryId?.name ?? null,
         subCategoryId:
           (created as any).subCategoryId?._id?.toString() ??
           (created as any).subCategoryId?.toString() ??
