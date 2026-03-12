@@ -36,6 +36,8 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +60,21 @@ export default function AdminCategoriesPage() {
   useEffect(() => {
     void fetchCategories();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [rowsPerPage]);
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(categories.length / rowsPerPage));
+    setPage((p) => Math.min(p, pages));
+  }, [categories.length, rowsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(categories.length / rowsPerPage));
+  const pagedCategories = categories.slice(
+    (page - 1) * rowsPerPage,
+    (page - 1) * rowsPerPage + rowsPerPage
+  );
 
   async function fetchCategories() {
     try {
@@ -321,7 +338,7 @@ export default function AdminCategoriesPage() {
                   </td>
                 </tr>
               ) : (
-                categories.map((category) => (
+                pagedCategories.map((category) => (
                   <tr key={category.id}>
                     <td className="px-4 py-3 align-middle">
                       <div className="flex items-center gap-3">
@@ -406,6 +423,54 @@ export default function AdminCategoriesPage() {
             </tbody>
           </table>
         </div>
+
+        {!loading && categories.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-[11px] text-gray-500">
+                Showing {(page - 1) * rowsPerPage + 1}–
+                {Math.min(page * rowsPerPage, categories.length)} of{" "}
+                {categories.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-500">Rows:</span>
+                <select
+                  value={String(rowsPerPage)}
+                  onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                  className="rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                >
+                  <option value="5">5</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <div className="text-[11px] text-gray-500">
+                Page {page} of {totalPages}
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((prev) => (prev < totalPages ? prev + 1 : prev))
+                }
+                disabled={page >= totalPages}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isFormOpen && (

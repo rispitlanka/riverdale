@@ -79,7 +79,7 @@ function orderStatusBadgeClasses(status: OrderStatus): string {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -109,7 +109,7 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, orderStatusFilter, paymentStatusFilter]);
+  }, [page, limit, orderStatusFilter, paymentStatusFilter]);
 
   async function fetchOrders() {
     try {
@@ -150,6 +150,13 @@ export default function AdminOrdersPage() {
   function handleChangePaymentStatusFilter(value: string) {
     setPage(1);
     setPaymentStatusFilter(value);
+  }
+
+  function handleChangeLimit(value: string) {
+    const next = Number.parseInt(value, 10);
+    const safe = Number.isFinite(next) ? next : 10;
+    setPage(1);
+    setLimit(safe);
   }
 
   function openStatusModal(order: OrderListItem) {
@@ -313,6 +320,19 @@ export default function AdminOrdersPage() {
               <option value="paid">Paid</option>
               <option value="failed">Failed</option>
               <option value="refunded">Refunded</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-700">Rows</label>
+            <select
+              value={String(limit)}
+              onChange={(e) => handleChangeLimit(e.target.value)}
+              className="block w-24 rounded-md border border-gray-300 px-3 py-1.5 text-xs shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+            >
+              <option value="5">5</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
             </select>
           </div>
         </div>
