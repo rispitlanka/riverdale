@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import dbConnect from '@/lib/mongodb';
+import { connectDB } from '@/lib/db';
 import Category from '@/lib/models/Category';
 import Metal from '@/lib/models/Metal';
 import { formatCurrency } from '@/lib/utils';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function RatesPage() {
-  await dbConnect();
+  await connectDB();
 
   const categories = await Category.find({ isActive: true }).lean();
   

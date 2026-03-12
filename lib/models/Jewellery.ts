@@ -1,4 +1,4 @@
-import { Schema, model, models, Document, Types } from 'mongoose';
+import mongoose, { Schema, Model, Document, Types } from 'mongoose';
 
 export interface JewelleryDocument extends Document {
   name: string;
@@ -90,9 +90,11 @@ const JewellerySchema = new Schema<JewelleryDocument>(
   }
 );
 
+type JewelleryModel = Model<JewelleryDocument>;
+
 const Jewellery =
-  (models.Jewellery as ReturnType<typeof model<JewelleryDocument>>) ||
-  model<JewelleryDocument>('Jewellery', JewellerySchema);
+  (mongoose.models.Jewellery as JewelleryModel) ||
+  mongoose.model<JewelleryDocument>('Jewellery', JewellerySchema);
 
 export default Jewellery;
 

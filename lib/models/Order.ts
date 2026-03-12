@@ -1,4 +1,4 @@
-import { Schema, model, models, Document, Types } from "mongoose";
+import mongoose, { Schema, Model, Document, Types } from "mongoose";
 
 export type OrderItemType = "jewellery" | "product" | "sell-metal";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
@@ -152,8 +152,10 @@ const OrderSchema = new Schema<OrderDocument>(
   }
 );
 
+type OrderModel = Model<OrderDocument>;
+
 const Order =
-  (models.Order as ReturnType<typeof model<OrderDocument>>) ||
-  model<OrderDocument>("Order", OrderSchema);
+  (mongoose.models.Order as OrderModel) ||
+  mongoose.model<OrderDocument>("Order", OrderSchema);
 
 export default Order;

@@ -3,9 +3,7 @@ import { connectDB } from "@/lib/db";
 import Order from "../../../../../../../lib/models/Order";
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 const ALLOWED_STATUSES = [
@@ -21,7 +19,7 @@ type AllowedStatus = (typeof ALLOWED_STATUSES)[number];
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const body = await request.json().catch(() => null);
 

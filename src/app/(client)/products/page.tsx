@@ -34,7 +34,7 @@ export default function ProductsPage() {
     try {
       setLoading(true);
       const [metalsRes, categoriesRes] = await Promise.all([
-        fetch('/api/metals?activeOnly=true', {
+        fetch('/api/products', {
           cache: 'no-store',
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -162,7 +162,10 @@ export default function ProductsPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredMetals.map((metal) => {
             const totalPrice = metal.pricePerGram * metal.weight;
-            const categoryName = typeof metal.category === 'object' ? metal.category.name : '';
+            const categoryName =
+              metal.category && typeof metal.category === "object"
+                ? metal.category.name
+                : "";
             
             return (
               <Link key={metal._id} href={`/products/${metal._id}`} className="h-full flex">
@@ -208,7 +211,7 @@ export default function ProductsPage() {
                         </span>
                       </div>
                       <Button
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.preventDefault();
                           addToCart(metal, 1);
                           toast.success(`${metal.name} added to cart!`);

@@ -12,51 +12,73 @@ import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import { toast } from 'sonner';
 
+const DEFAULT_BANNER = '/banner.jpeg';
+
+type BannersBySlot = { header: string; middle1: string; middle2: string };
+
+const defaultBanners: BannersBySlot = {
+  header: DEFAULT_BANNER,
+  middle1: '',
+  middle2: '',
+};
+
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<IMetal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [banners, setBanners] = useState<BannersBySlot>(defaultBanners);
   const { addToCart } = useCart();
 
   useEffect(() => {
     fetchFeaturedProducts();
   }, []);
 
+  useEffect(() => {
+    fetch('/api/public/banners', { cache: 'no-store' })
+      .then((res) => res.ok ? res.json() : [])
+      .then((data: { slot: string; imageUrl: string }[]) => {
+        if (!Array.isArray(data)) return;
+        const bySlot: BannersBySlot = { ...defaultBanners };
+        for (const b of data) {
+          const url = b?.imageUrl?.trim() ?? '';
+          if (b.slot === 'header' && url) bySlot.header = url;
+          if (b.slot === 'middle1') bySlot.middle1 = url;
+          if (b.slot === 'middle2') bySlot.middle2 = url;
+        }
+        setBanners(bySlot);
+      })
+      .catch(() => {});
+  }, []);
+
   const fetchFeaturedProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/metals', {
+      const response = await fetch('/api/products', {
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       const data = await response.json();
-      
-      if (!response.ok || (data && typeof data === 'object' && 'error' in data)) {
+
+      if (!response.ok || !Array.isArray(data)) {
         console.error('API Error:', data);
         setFeaturedProducts([]);
         setLoading(false);
         return;
       }
-      
-      if (!Array.isArray(data)) {
-        console.error('Invalid data format (not an array):', data);
-        setFeaturedProducts([]);
-        setLoading(false);
-        return;
-      }
-      
+
       const featured = data
-        .filter((metal: any) => {
-          return metal && 
-                 metal._id && 
-                 metal.name && 
-                 metal.isActive === true && 
-                 metal.stockStatus === 'in-stock';
+        .filter((product: any) => {
+          return (
+            product &&
+            product._id &&
+            product.name &&
+            product.stockStatus === 'in-stock'
+          );
         })
         .slice(0, 4);
-      
+
       setFeaturedProducts(featured || []);
       setLoading(false);
     } catch (error) {
@@ -123,17 +145,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Banner Section */}
+      {/* Banner Section – uses Header Image from Admin Banners */}
       <section className="bg-background py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="w-full rounded-lg overflow-hidden">
-            <Image 
-              src="/banner.jpeg" 
+            <Image
+              src={banners.header}
               alt="Riverdale Pawnbrokers Banner"
               width={1200}
               height={400}
               className="w-full h-auto object-cover"
               priority
+              unoptimized={banners.header.startsWith('data:')}
             />
           </div>
         </div>
@@ -197,7 +220,10 @@ export default function HomePage() {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {featuredProducts.map((product) => {
                   const totalPrice = product.pricePerGram * product.weight;
-                  const categoryName = typeof product.category === 'object' ? product.category.name : '';
+                  const categoryName =
+                    product.category && typeof product.category === "object"
+                      ? product.category.name
+                      : "";
                   
                 return (
                   <Link key={product._id} href={`/products/${product._id}`} className="h-full flex">
@@ -237,12 +263,12 @@ export default function HomePage() {
                                 ({formatCurrency(product.pricePerGram)}/{product.weightUnit})
                               </span>
                             </div>
-                            <Button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                addToCart(product, 1);
-                                toast.success(`${product.name} added to cart!`);
-                              }}
+                  <Button 
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                      e.preventDefault();
+                      addToCart(product, 1);
+                      toast.success(`${product.name} added to cart!`);
+                    }}
                               disabled={product.stockStatus !== 'in-stock'}
                               className="w-full bg-[#FBC02E] hover:bg-[#E5AD1F] text-foreground font-semibold shadow-none"
                             >
@@ -273,6 +299,46 @@ export default function HomePage() {
               </Link>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Middle Banners – half-half (middle1 + middle2 from Admin Banners) */}
+      <section className="bg-background py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="w-full aspect-[2/1] min-h-[200px] rounded-lg overflow-hidden bg-muted">
+              {banners.middle1 ? (
+                <Image
+                  src={banners.middle1}
+                  alt="Promotional banner 1"
+                  width={600}
+                  height={300}
+                  className="w-full h-full object-cover"
+                  unoptimized={banners.middle1.startsWith('data:')}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                  Middle 1
+                </div>
+              )}
+            </div>
+            <div className="w-full aspect-[2/1] min-h-[200px] rounded-lg overflow-hidden bg-muted">
+              {banners.middle2 ? (
+                <Image
+                  src={banners.middle2}
+                  alt="Promotional banner 2"
+                  width={600}
+                  height={300}
+                  className="w-full h-full object-cover"
+                  unoptimized={banners.middle2.startsWith('data:')}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                  Middle 2
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

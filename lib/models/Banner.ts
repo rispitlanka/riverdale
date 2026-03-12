@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose';
+import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export type BannerSlot = 'header' | 'middle1' | 'middle2';
 
@@ -29,9 +29,11 @@ const BannerSchema = new Schema<BannerDocument>(
   }
 );
 
+type BannerModel = Model<BannerDocument>;
+
 const Banner =
-  (models.Banner as ReturnType<typeof model<BannerDocument>>) ||
-  model<BannerDocument>('Banner', BannerSchema);
+  (mongoose.models.Banner as BannerModel) ||
+  mongoose.model<BannerDocument>('Banner', BannerSchema);
 
 export default Banner;
 

@@ -16,6 +16,7 @@ import Image from 'next/image';
 export default function SellPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<ICategory[]>([]);
+  const [metals, setMetals] = useState<{ id: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
@@ -55,7 +56,18 @@ export default function SellPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchMetals();
   }, []);
+
+  const fetchMetals = async () => {
+    try {
+      const res = await fetch('/api/public/metals');
+      const data = await res.json();
+      if (Array.isArray(data)) setMetals(data);
+    } catch (err) {
+      console.error('Error fetching metals', err);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -240,6 +252,7 @@ export default function SellPage() {
         idProof: idProofData,
         pickupPreference: formData.pickupPreference,
         preferredDate: formData.preferredDate || undefined,
+        preferredTime: formData.preferredTime || undefined,
         location: formData.location,
         appointmentId: appointmentId || undefined,
       };
@@ -348,7 +361,7 @@ export default function SellPage() {
                   <Label htmlFor="metalType" className="text-foreground">Metal Type *</Label>
                   <Select
                     value={formData.metalType}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFormData({ ...formData, metalType: value })
                     }
                     required
@@ -357,10 +370,11 @@ export default function SellPage() {
                       <SelectValue placeholder="Select metal type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Gold">Gold</SelectItem>
-                      <SelectItem value="Silver">Silver</SelectItem>
-                      <SelectItem value="Platinum">Platinum</SelectItem>
-                      <SelectItem value="Palladium">Palladium</SelectItem>
+                      {metals.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -370,7 +384,7 @@ export default function SellPage() {
                   <Label htmlFor="category" className="text-foreground">Category (Optional)</Label>
                   <Select
                     value={formData.category}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFormData({ ...formData, category: value })
                     }
                   >
@@ -494,7 +508,7 @@ export default function SellPage() {
                     <Label htmlFor="idProofType" className="text-foreground">Select ID Type *</Label>
                     <Select
                       value={formData.idProofType}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setFormData({ ...formData, idProofType: value })
                       }
                     >
@@ -669,7 +683,7 @@ export default function SellPage() {
                     ) : (
                       <Select
                         value={appointmentTime}
-                        onValueChange={(value) => {
+                        onValueChange={(value: string) => {
                           setAppointmentTime(value);
                           setFormData({ ...formData, preferredTime: value });
                         }}
@@ -679,10 +693,10 @@ export default function SellPage() {
                     </SelectTrigger>
                     <SelectContent>
                           {availableSlots
-                            .filter((slot) => slot.available)
-                            .map((slot) => (
-                              <SelectItem key={slot.time} value={slot.time}>
-                                {slot.time}
+                            .filter((slot: ITimeSlot) => slot.available)
+                            .map((slot: ITimeSlot) => (
+                              <SelectItem key={slot.start} value={slot.start}>
+                                {slot.start}
                               </SelectItem>
                             ))}
                     </SelectContent>

@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose';
+import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export interface MetalDocument extends Document {
   name: string;
@@ -31,9 +31,11 @@ const MetalSchema = new Schema<MetalDocument>(
   }
 );
 
+type MetalModel = Model<MetalDocument>;
+
 const Metal =
-  (models.Metal as ReturnType<typeof model<MetalDocument>>) ||
-  model<MetalDocument>('Metal', MetalSchema);
+  (mongoose.models.Metal as MetalModel) ||
+  mongoose.model<MetalDocument>('Metal', MetalSchema);
 
 export default Metal;
 

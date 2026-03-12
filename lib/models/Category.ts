@@ -1,4 +1,4 @@
-import { Schema, model, models, Document, Types } from 'mongoose';
+import mongoose, { Schema, Model, Document, Types } from 'mongoose';
 
 export type CategoryType = 'parent' | 'sub';
 export type CategoryStatus = 'active' | 'inactive';
@@ -57,9 +57,11 @@ const CategorySchema = new Schema<CategoryDocument>(
   }
 );
 
+type CategoryModel = Model<CategoryDocument>;
+
 const Category =
-  (models.Category as ReturnType<typeof model<CategoryDocument>>) ||
-  model<CategoryDocument>('Category', CategorySchema);
+  (mongoose.models.Category as CategoryModel) ||
+  mongoose.model<CategoryDocument>('Category', CategorySchema);
 
 export default Category;
 

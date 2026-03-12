@@ -7,15 +7,13 @@ import { calculateProductPrice } from "../../../../../../lib/priceUtils";
 import { uploadImageToCloudinary } from "../../../../../../lib/cloudinary";
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     const existing = await Product.findById(id);
@@ -153,7 +151,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const deleted = await Product.findByIdAndDelete(id);
 

@@ -64,3 +64,9 @@ export function getStatusLabel(status: string): string {
   }
 }
 
+// Utility to merge Tailwind / className strings
+export function cn(...inputs: Array<string | number | null | undefined | false>): string {
+  return inputs.filter(Boolean).join(" ");
+}
+
+

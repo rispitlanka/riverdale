@@ -1,4 +1,4 @@
-import { Schema, model, models, Document, Types } from 'mongoose';
+import mongoose, { Schema, Model, Document, Types } from 'mongoose';
 
 export interface TodayPriceDocument extends Document {
   metalId: Types.ObjectId;
@@ -34,9 +34,11 @@ const TodayPriceSchema = new Schema<TodayPriceDocument>(
   }
 );
 
+type TodayPriceModel = Model<TodayPriceDocument>;
+
 const TodayPrice =
-  (models.TodayPrice as ReturnType<typeof model<TodayPriceDocument>>) ||
-  model<TodayPriceDocument>('TodayPrice', TodayPriceSchema);
+  (mongoose.models.TodayPrice as TodayPriceModel) ||
+  mongoose.model<TodayPriceDocument>('TodayPrice', TodayPriceSchema);
 
 export default TodayPrice;
 

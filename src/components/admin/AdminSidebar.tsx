@@ -1,8 +1,7 @@
- "use client";
+"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   HomeIcon,
   TagIcon,
@@ -17,7 +16,7 @@ import {
 type NavItem = {
   label: string;
   href: string;
-  Icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element;
+  Icon: (props: React.SVGProps<SVGSVGElement>) => React.ReactNode;
 };
 
 const navItems: NavItem[] = [
@@ -36,8 +35,19 @@ const navItems: NavItem[] = [
   { label: "Orders", href: "/admin/orders", Icon: ShoppingBagIcon },
 ];
 
-export function AdminSidebar(): ReactNode {
+export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore network errors on logout
+    } finally {
+      router.push("/login");
+    }
+  }
 
   return (
     <aside className="flex h-screen w-64 flex-col bg-gray-900 text-gray-100">
@@ -77,8 +87,15 @@ export function AdminSidebar(): ReactNode {
         })}
       </nav>
 
-      <div className="border-t border-gray-800 px-4 py-3 text-xs text-gray-500">
-        &copy; {new Date().getFullYear()} Gold Admin
+      <div className="border-t border-gray-800 px-4 py-3 flex items-center justify-between text-xs text-gray-500">
+        <span>&copy; {new Date().getFullYear()} Gold Admin</span>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-md border border-gray-700 px-2 py-1 text-[11px] font-medium text-gray-200 hover:bg-gray-800"
+        >
+          Logout
+        </button>
       </div>
     </aside>
   );

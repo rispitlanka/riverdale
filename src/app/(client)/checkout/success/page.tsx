@@ -43,7 +43,7 @@ function SuccessContent() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <p className="text-white light:text-gray-900">Loading...</p>
+        <p className="text-foreground">Loading...</p>
       </div>
     );
   }
@@ -53,17 +53,17 @@ function SuccessContent() {
       <Card className="text-center">
         <CardContent className="py-12">
           <div className="text-6xl mb-6">✅</div>
-          <h1 className="text-3xl font-bold text-white light:text-gray-900 mb-4">Payment Successful!</h1>
-          <p className="text-gray-300 light:text-gray-700 mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-4">Payment Successful!</h1>
+          <p className="text-muted-foreground mb-6">
             Thank you for your purchase. Your order has been confirmed.
           </p>
           {orderNumber && (
-            <div className="bg-[#191411] light:bg-gray-50 border border-[#9A0156]/30 light:border-[#9A0156]/30 rounded-lg p-6 mb-6">
-              <p className="text-sm text-gray-400 light:text-gray-700 mb-2">Your Order Number</p>
-              <p className="text-2xl font-bold text-[#9A0156] light:text-[#9A0156]">{orderNumber}</p>
+            <div className="bg-muted border border-border rounded-lg p-6 mb-6">
+              <p className="text-sm text-muted-foreground mb-2">Your Order Number</p>
+              <p className="text-2xl font-bold text-[#9A0156]">{orderNumber}</p>
             </div>
           )}
-          <p className="text-sm text-gray-400 light:text-gray-700 mb-8">
+          <p className="text-sm text-muted-foreground mb-8">
             A confirmation email has been sent to your email address with order details.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -88,7 +88,7 @@ export default function CheckoutSuccessPage() {
   return (
     <Suspense fallback={
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <p className="text-white light:text-gray-900">Loading...</p>
+        <p className="text-foreground">Loading...</p>
       </div>
     }>
       <SuccessContent />

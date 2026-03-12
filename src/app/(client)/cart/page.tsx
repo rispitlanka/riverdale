@@ -46,21 +46,11 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: cart.map(item => ({
-            metal: item._id,
-            metalName: item.name,
-            metalSku: item.sku,
-            quantity: item.quantity,
-            pricePerGram: item.pricePerGram,
-            weight: item.weight,
-            weightUnit: item.weightUnit,
-            totalPrice: item.pricePerGram * item.weight * item.quantity,
-            metalImage: item.images[0],
-          })),
+          items: cart,
           customerInfo: checkoutForm,
           subtotal,
           tax,
@@ -71,12 +61,14 @@ export default function CartPage() {
 
       const data = await response.json();
 
-      if (response.ok && data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else {
-        toast.error(data.error || 'Failed to create checkout session');
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to create order');
+        return;
       }
+
+      toast.success('Order placed successfully!');
+      clearCart();
+      router.push('/checkout/success');
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error('Failed to process checkout');
@@ -92,8 +84,8 @@ export default function CartPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <div className="text-6xl mb-4">🛒</div>
-            <h2 className="text-2xl font-bold text-white light:text-gray-900 mb-2">Your Cart is Empty</h2>
-            <p className="text-gray-400 light:text-gray-700 mb-6">Add some precious metals to your cart to get started</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Your Cart is Empty</h2>
+            <p className="text-muted-foreground mb-6">Add some precious metals to your cart to get started</p>
             <Link href="/products">
               <Button className="bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold">
                 Browse Products
@@ -116,8 +108,8 @@ export default function CartPage() {
           >
             ← Back to Cart
           </Button>
-          <h1 className="text-4xl font-bold text-white light:text-gray-900 mb-2">Checkout</h1>
-          <p className="text-gray-300 light:text-gray-700">Complete your purchase</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Checkout</h1>
+          <p className="text-muted-foreground">Complete your purchase</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -206,13 +198,13 @@ export default function CartPage() {
                     />
                   </div>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold py-6 text-lg"
-                >
-                  {loading ? 'Processing...' : `Pay ${formatCurrency(total)}`}
-                </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold py-6 text-lg"
+                  >
+                    {loading ? 'Processing...' : `Make Order (${formatCurrency(total)})`}
+                  </Button>
               </form>
             </CardContent>
           </Card>
@@ -224,8 +216,8 @@ export default function CartPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {cart.map((item) => (
-                <div key={item._id} className="flex gap-3 pb-3 border-b border-gray-700 light:border-gray-200">
-                  {item.images[0] ? (
+                <div key={item._id} className="flex gap-3 pb-3 border-b border-border">
+                  {item.images && item.images[0] ? (
                     <div className="relative w-16 h-16 flex-shrink-0">
                       <Image
                         src={item.images[0]}
@@ -235,35 +227,35 @@ export default function CartPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-16 h-16 bg-[#191411] light:bg-gray-100 rounded flex items-center justify-center">
+                    <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
                       💎
                     </div>
                   )}
                   <div className="flex-1">
-                    <div className="text-white light:text-gray-900 font-semibold">{item.name}</div>
-                    <div className="text-sm text-gray-400 light:text-gray-700">Qty: {item.quantity}</div>
-                    <div className="text-sm text-[#9A0156] light:text-[#9A0156]">
+                    <div className="text-foreground font-semibold">{item.name}</div>
+                    <div className="text-sm text-muted-foreground">Qty: {item.quantity}</div>
+                    <div className="text-sm text-[#9A0156]">
                       {formatCurrency(item.pricePerGram * item.weight * item.quantity)}
                     </div>
                   </div>
                 </div>
               ))}
               <div className="pt-4 space-y-2">
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Tax (8%)</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
                   <span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-white light:text-gray-900 pt-2 border-t border-gray-700 light:border-gray-200">
+                <div className="flex justify-between text-xl font-bold text-foreground pt-2 border-t border-border">
                   <span>Total</span>
-                  <span className="text-[#9A0156] light:text-[#9A0156]">{formatCurrency(total)}</span>
+                  <span className="text-[#9A0156]">{formatCurrency(total)}</span>
                 </div>
               </div>
             </CardContent>
@@ -276,8 +268,8 @@ export default function CartPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white light:text-gray-900 mb-2">Shopping Cart</h1>
-        <p className="text-gray-300 light:text-gray-700">{cart.length} {cart.length === 1 ? 'item' : 'items'} in your cart</p>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Shopping Cart</h1>
+        <p className="text-muted-foreground">{cart.length} {cart.length === 1 ? 'item' : 'items'} in your cart</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -287,7 +279,7 @@ export default function CartPage() {
             <Card key={item._id}>
               <CardContent className="p-4">
                 <div className="flex gap-4">
-                  {item.images[0] ? (
+                  {item.images && item.images[0] ? (
                     <div className="relative w-24 h-24 flex-shrink-0">
                       <Image
                         src={item.images[0]}
@@ -297,16 +289,16 @@ export default function CartPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-24 h-24 bg-[#191411] light:bg-gray-100 rounded flex items-center justify-center text-3xl">
+                    <div className="w-24 h-24 bg-muted rounded flex items-center justify-center text-3xl">
                       💎
                     </div>
                   )}
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white light:text-gray-900 mb-1">{item.name}</h3>
-                    <p className="text-sm text-gray-400 light:text-gray-700 mb-2">{item.purity} • {item.weight}{item.weightUnit}</p>
+                    <h3 className="text-xl font-bold text-foreground mb-1">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{item.purity} • {item.weight}{item.weightUnit}</p>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm text-gray-400 light:text-gray-700">SKU:</span>
-                      <span className="text-sm text-gray-300 light:text-gray-900">{item.sku}</span>
+                      <span className="text-sm text-muted-foreground">SKU:</span>
+                      <span className="text-sm text-foreground">{item.sku}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -317,7 +309,7 @@ export default function CartPage() {
                         >
                           -
                         </Button>
-                        <span className="text-white light:text-gray-900 font-semibold w-8 text-center">{item.quantity}</span>
+                        <span className="text-foreground font-semibold w-8 text-center">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
@@ -327,10 +319,10 @@ export default function CartPage() {
                         </Button>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-[#9A0156] light:text-[#9A0156]">
+                        <div className="text-lg font-bold text-[#9A0156]">
                           {formatCurrency(item.pricePerGram * item.weight * item.quantity)}
                         </div>
-                        <div className="text-xs text-gray-400 light:text-gray-700">
+                        <div className="text-xs text-muted-foreground">
                           {formatCurrency(item.pricePerGram)}/g
                         </div>
                       </div>
@@ -367,28 +359,28 @@ export default function CartPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Tax (8%)</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 light:text-gray-700">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
                   <span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span>
                 </div>
                 {subtotal > 1000 && (
-                  <div className="text-sm text-green-400 light:text-green-700">
+                  <div className="text-sm text-green-600 dark:text-green-400">
                     ✓ Free shipping on orders over $1,000
                   </div>
                 )}
               </div>
-              <div className="pt-4 border-t border-gray-700 light:border-gray-200">
-                <div className="flex justify-between text-xl font-bold text-white light:text-gray-900 mb-4">
+              <div className="pt-4 border-t border-border">
+                <div className="flex justify-between text-xl font-bold text-foreground mb-4">
                   <span>Total</span>
-                  <span className="text-[#9A0156] light:text-[#9A0156]">{formatCurrency(total)}</span>
+                  <span className="text-[#9A0156]">{formatCurrency(total)}</span>
                 </div>
                 <Button
                   onClick={() => setIsCheckout(true)}
@@ -397,7 +389,7 @@ export default function CartPage() {
                   Proceed to Checkout
                 </Button>
               </div>
-              <div className="pt-4 border-t border-gray-700 light:border-gray-200 text-center">
+              <div className="pt-4 border-t border-border text-center">
                 <Link href="/products">
                   <Button variant="outline" className="w-full">
                     Continue Shopping

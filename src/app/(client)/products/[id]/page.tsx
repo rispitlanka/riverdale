@@ -30,7 +30,7 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/metals/${productId}`, {
+      const response = await fetch(`/api/products/${productId}`, {
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +89,10 @@ export default function ProductDetailPage() {
   }
 
   const totalPrice = product.pricePerGram * product.weight;
-  const categoryName = typeof product.category === 'object' ? product.category.name : '';
+  const categoryName =
+    product.category && typeof product.category === "object"
+      ? product.category.name
+      : "";
   const images = product.images && product.images.length > 0 ? product.images : [];
   const mainImage = images[selectedImageIndex] || '/placeholder.jpg';
 
@@ -128,7 +131,7 @@ export default function ProductDetailPage() {
           {/* Thumbnail Images */}
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {images.map((image, index) => (
+              {images.map((image: string, index: number) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -178,9 +181,9 @@ export default function ProductDetailPage() {
           </h1>
 
           {/* Description */}
-          {product.description && (
+            {product.description && (
             <div className="space-y-3 text-muted-foreground leading-relaxed">
-              {product.description.split('\n').map((paragraph, index) => {
+              {product.description.split('\n').map((paragraph: string, index: number) => {
                 // Check if paragraph is a bullet point
                 if (paragraph.trim().startsWith('•') || paragraph.trim().startsWith('-')) {
                   return (
@@ -198,7 +201,7 @@ export default function ProductDetailPage() {
           )}
 
           {/* Specifications Box */}
-          <Card className="bg-muted/50 border-border">
+          <Card className="bg-card border-border">
             <CardContent className="p-6 space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Purity:</span>

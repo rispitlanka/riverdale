@@ -203,14 +203,14 @@ export default function TrackRequestPage() {
         )}
 
         {/* Photos */}
-        {request.metalPhotos.length > 0 && (
+        {request.metalPhotos && request.metalPhotos.length > 0 && (
           <Card className="md:col-span-2 bg-card border-border">
             <CardHeader>
               <CardTitle className="text-foreground">Submitted Photos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {request.metalPhotos.map((photo, index) => (
+                {request.metalPhotos.map((photo: string, index: number) => (
                   <Image
                     key={index}
                     src={photo}

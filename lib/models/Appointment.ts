@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from "mongoose";
+import mongoose, { Schema, Model, Document } from "mongoose";
 
 export type AppointmentStatus = "scheduled" | "completed" | "cancelled";
 
@@ -44,9 +44,11 @@ const AppointmentSchema = new Schema<AppointmentDocument>(
   }
 );
 
+type AppointmentModel = Model<AppointmentDocument>;
+
 const Appointment =
-  (models.Appointment as ReturnType<typeof model<AppointmentDocument>>) ||
-  model<Appointment>("Appointment", AppointmentSchema);
+  (mongoose.models.Appointment as AppointmentModel) ||
+  mongoose.model<AppointmentDocument>("Appointment", AppointmentSchema);
 
 export default Appointment;
 
