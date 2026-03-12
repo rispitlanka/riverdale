@@ -31,16 +31,33 @@ export default function TodayPriceManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     void fetchTodayPrices();
   }, []);
 
   useEffect(() => {
+    setPage(1);
+  }, [rowsPerPage]);
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+    setPage((p) => Math.min(p, pages));
+  }, [rows.length, rowsPerPage]);
+
+  useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(id);
   }, [toast]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+  const pagedRows = rows.slice(
+    (page - 1) * rowsPerPage,
+    (page - 1) * rowsPerPage + rowsPerPage
+  );
 
   async function fetchTodayPrices() {
     try {
@@ -204,7 +221,7 @@ export default function TodayPriceManagementPage() {
                     </td>
                   </tr>
                 ) : (
-                  rows.map((row) => (
+                  pagedRows.map((row) => (
                     <tr key={row.metalId}>
                       <td className="px-4 py-3 align-middle text-sm text-gray-900">
                         {row.name}
@@ -253,6 +270,53 @@ export default function TodayPriceManagementPage() {
             </table>
           </div>
         </div>
+
+        {!loading && rows.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-[11px] text-gray-500">
+                Showing {(page - 1) * rowsPerPage + 1}–
+                {Math.min(page * rowsPerPage, rows.length)} of {rows.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-500">Rows:</span>
+                <select
+                  value={String(rowsPerPage)}
+                  onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                  className="rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                >
+                  <option value="5">5</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <div className="text-[11px] text-gray-500">
+                Page {page} of {totalPages}
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((prev) => (prev < totalPages ? prev + 1 : prev))
+                }
+                disabled={page >= totalPages}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end pt-2">
           <button
