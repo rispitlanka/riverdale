@@ -36,7 +36,7 @@ function Navigation() {
             <Link href="/" className="flex items-center">
               <div className="relative w-32 h-32">
                 <Image
-                  src={theme === 'dark' ? '/Logo_W.svg' : '/Logo_W.svg'}
+                  src={theme === 'dark' ? '/Logo_w.svg' : '/Logo_w.svg'}
                   alt="Riverdale Pawn Brokers"
                   fill
                   className="object-contain"
@@ -107,7 +107,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <Link href="/" className="flex items-center gap-4 mb-4">
                 <div className="relative w-32 h-32">
                   <Image
-                    src={theme === 'dark' ? '/Logo_D.svg' : '/Logo_W.svg'}
+                    src={theme === 'dark' ? '/Logo_D.svg' : '/Logo_w.svg'}
                     alt="Riverdale Pawn Brokers"
                     fill
                     className="object-contain"

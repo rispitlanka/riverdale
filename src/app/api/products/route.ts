@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import Jewellery from "../../../../lib/models/Jewellery";
-import Product from "../../../../lib/models/Product";
-import Category from "../../../../lib/models/Category";
+import Jewellery from "@/lib/models/Jewellery";
+import Product from "@/lib/models/Product";
+import Category from "@/lib/models/Category";
 
 function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
   const weight = typeof item.weight === "number" && !Number.isNaN(item.weight) ? item.weight : 0;
@@ -46,10 +46,10 @@ export async function GET() {
 
     const [jewelleryItems, productItems] = await Promise.all([
       Jewellery.find()
-        .populate("categoryId", "name")
+        .populate({ path: "categoryId", model: Category, select: "name" })
         .lean(),
       Product.find()
-        .populate("categoryId", "name")
+        .populate({ path: "categoryId", model: Category, select: "name" })
         .lean(),
     ]);
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import Jewellery from "../../../../../lib/models/Jewellery";
-import Product from "../../../../../lib/models/Product";
+import Jewellery from "@/lib/models/Jewellery";
+import Product from "@/lib/models/Product";
 import Category from "../../../../../lib/models/Category";
 
 function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
