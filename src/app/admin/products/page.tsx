@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type ProductItem = {
   id: string;
@@ -57,6 +58,8 @@ export default function AdminProductsPage() {
   const [items, setItems] = useState<ProductItem[]>([]);
   const [metals, setMetals] = useState<MetalOption[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [metalsLoading, setMetalsLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +108,7 @@ export default function AdminProductsPage() {
 
   async function fetchMetals() {
     try {
+      setMetalsLoading(true);
       const res = await fetch("/api/admin/metals");
       if (!res.ok) {
         throw new Error("Failed to load metals");
@@ -113,11 +117,14 @@ export default function AdminProductsPage() {
       setMetals(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setMetalsLoading(false);
     }
   }
 
   async function fetchCategories() {
     try {
+      setCategoriesLoading(true);
       const [parentsRes, subsRes] = await Promise.all([
         fetch("/api/admin/categories?type=parent"),
         fetch("/api/admin/categories?type=sub"),
@@ -138,6 +145,8 @@ export default function AdminProductsPage() {
       setCategories(dedupedById);
     } catch (err) {
       console.error(err);
+    } finally {
+      setCategoriesLoading(false);
     }
   }
 
@@ -557,43 +566,61 @@ export default function AdminProductsPage() {
                   <label className="text-xs font-medium text-gray-700">
                     Metal
                   </label>
-                  <select
-                    required
-                    value={form.metalId}
-                    onChange={(e) =>
-                      handleInputChange("metalId", e.target.value)
-                    }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
-                  >
-                    <option value="">Select metal</option>
+                  <div className="relative">
+                    <select
+                      required
+                      value={form.metalId}
+                      onChange={(e) =>
+                        handleInputChange("metalId", e.target.value)
+                      }
+                      disabled={metalsLoading}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B] disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value="">
+                        {metalsLoading ? "Loading metals..." : "Select metal"}
+                      </option>
                     {metals.map((metal) => (
                       <option key={metal.id} value={metal.id}>
                         {metal.name} (CA$
                         {metal.basePrice.toLocaleString()})
                       </option>
                     ))}
-                  </select>
+                    </select>
+                    {metalsLoading && (
+                      <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-700">
                     Category
                   </label>
-                  <select
-                    required
-                    value={form.categoryId}
-                    onChange={(e) =>
-                      handleInputChange("categoryId", e.target.value)
-                    }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
-                  >
-                    <option value="">Select parent category</option>
+                  <div className="relative">
+                    <select
+                      required
+                      value={form.categoryId}
+                      onChange={(e) =>
+                        handleInputChange("categoryId", e.target.value)
+                      }
+                      disabled={categoriesLoading}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B] disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value="">
+                        {categoriesLoading
+                          ? "Loading categories..."
+                          : "Select parent category"}
+                      </option>
                     {parentCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
-                  </select>
+                    </select>
+                    {categoriesLoading && (
+                      <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-1">
@@ -607,16 +634,19 @@ export default function AdminProductsPage() {
                         </span>
                       )}
                   </label>
-                  <select
-                    value={form.subCategoryId}
-                    onChange={(e) =>
-                      handleInputChange("subCategoryId", e.target.value)
-                    }
-                    disabled={!form.categoryId}
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B] disabled:bg-gray-50 disabled:text-gray-400"
-                  >
+                  <div className="relative">
+                    <select
+                      value={form.subCategoryId}
+                      onChange={(e) =>
+                        handleInputChange("subCategoryId", e.target.value)
+                      }
+                      disabled={!form.categoryId || categoriesLoading}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B] disabled:bg-gray-50 disabled:text-gray-400"
+                    >
                     <option value="">
-                      {form.categoryId
+                      {categoriesLoading
+                        ? "Loading sub categories..."
+                        : form.categoryId
                         ? "Select sub category (optional)"
                         : "Select a category first"}
                     </option>
@@ -625,7 +655,11 @@ export default function AdminProductsPage() {
                         {cat.name}
                       </option>
                     ))}
-                  </select>
+                    </select>
+                    {categoriesLoading && (
+                      <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-1">

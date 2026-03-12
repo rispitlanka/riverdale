@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Eye } from "lucide-react";
 
 type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 type OrderStatus = "new" | "processing" | "shipped" | "delivered" | "cancelled";
@@ -26,6 +27,22 @@ type OrdersApiResponse = {
 };
 
 const GOLD_COLOR = "#B8860B";
+
+type OrderDetail = {
+  id: string;
+  orderRef: string | null;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  totalAmount: number;
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+  createdAt: string | null;
+  updatedAt: string | null;
+  shippingAddress: any | null;
+  address: any | null;
+  items: any[];
+};
 
 function paymentStatusBadgeClasses(status: PaymentStatus): string {
   switch (status) {
@@ -77,6 +94,12 @@ export default function AdminOrdersPage() {
   );
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const [viewOrderId, setViewOrderId] = useState<string | null>(null);
+  const [viewOrderDetail, setViewOrderDetail] = useState<OrderDetail | null>(
+    null
+  );
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const hasFilters = useMemo(
     () => !!orderStatusFilter || !!paymentStatusFilter,
@@ -139,6 +162,35 @@ export default function AdminOrdersPage() {
     setSelectedStatus("");
   }
 
+  async function openViewModal(orderId: string) {
+    setViewOrderId(orderId);
+    setViewOrderDetail(null);
+    setIsLoadingDetail(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to load order details");
+      }
+      const data: OrderDetail = await res.json();
+      setViewOrderDetail(data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "Failed to load order details");
+      setViewOrderId(null);
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }
+
+  function closeViewModal() {
+    setViewOrderId(null);
+    setViewOrderDetail(null);
+    setIsLoadingDetail(false);
+  }
+
   async function handleUpdateStatus() {
     if (!statusModalOrder || !selectedStatus) return;
 
@@ -179,6 +231,31 @@ export default function AdminOrdersPage() {
     const d = new Date(dateString);
     if (Number.isNaN(d.getTime())) return "—";
     return d.toLocaleString();
+  }
+
+  function formatAddress(detail: OrderDetail): string {
+    const addr = detail.shippingAddress;
+    if (addr && typeof addr === "object") {
+      const street = typeof addr.street === "string" ? addr.street.trim() : "";
+      const city = typeof addr.city === "string" ? addr.city.trim() : "";
+      const state = typeof addr.state === "string" ? addr.state.trim() : "";
+      const zip = typeof addr.zipCode === "string" ? addr.zipCode.trim() : "";
+      const country =
+        typeof addr.country === "string" ? addr.country.trim() : "";
+
+      const line1 = street;
+      const line2 = [city, state, zip].filter(Boolean).join(", ");
+      const line3 = country;
+
+      const lines = [line1, line2, line3].filter(Boolean);
+      if (lines.length > 0) return lines.join("\n");
+    }
+
+    if (detail.address != null) {
+      return String(detail.address);
+    }
+
+    return "—";
   }
 
   return (
@@ -271,12 +348,6 @@ export default function AdminOrdersPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Customer Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Phone
-                </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Total Amount
                 </th>
@@ -298,7 +369,7 @@ export default function AdminOrdersPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={7}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     Loading orders...
@@ -307,7 +378,7 @@ export default function AdminOrdersPage() {
               ) : orders.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={7}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     No orders found.
@@ -321,12 +392,6 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-900">
                       {order.customerName}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-sm text-gray-700">
-                      {order.customerEmail}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-sm text-gray-700">
-                      {order.customerPhone}
                     </td>
                     <td className="px-4 py-3 align-middle text-right text-sm text-gray-900">
                       CA$
@@ -359,13 +424,25 @@ export default function AdminOrdersPage() {
                       {formatDate(order.createdAt)}
                     </td>
                     <td className="px-4 py-3 align-middle text-right text-sm">
-                      <button
-                        type="button"
-                        onClick={() => openStatusModal(order)}
-                        className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        Update Status
-                      </button>
+                      <div className="inline-flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openViewModal(order.id)}
+                          className="inline-flex items-center justify-center rounded-md border border-gray-200 p-2 text-gray-700 hover:bg-gray-50"
+                          title="View"
+                        >
+                          <span className="sr-only">View</span>
+                          <Eye className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openStatusModal(order)}
+                          className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Update Status
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -461,6 +538,237 @@ export default function AdminOrdersPage() {
                   }}
                 >
                   {isUpdatingStatus ? "Updating..." : "Confirm"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewOrderId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Order Details
+                </h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  {viewOrderDetail?.orderRef ?? "—"} —{" "}
+                  {viewOrderDetail?.customerName ?? "—"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeViewModal}
+                className="rounded-md border border-gray-200 p-1 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+              >
+                <span className="sr-only">Close</span>×
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {isLoadingDetail ? (
+                <div className="py-8 text-center text-sm text-gray-500">
+                  Loading order details...
+                </div>
+              ) : !viewOrderDetail ? (
+                <div className="py-8 text-center text-sm text-gray-500">
+                  Unable to load details.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Order Ref
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {viewOrderDetail.orderRef ?? "—"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Order Date
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {viewOrderDetail.createdAt
+                          ? formatDate(viewOrderDetail.createdAt)
+                          : "—"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Customer Name
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {viewOrderDetail.customerName || "—"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Total Amount
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        CA$
+                        {viewOrderDetail.totalAmount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Payment Status
+                      </div>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${paymentStatusBadgeClasses(
+                            viewOrderDetail.paymentStatus
+                          )}`}
+                        >
+                          {viewOrderDetail.paymentStatus
+                            .charAt(0)
+                            .toUpperCase() +
+                            viewOrderDetail.paymentStatus.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Order Status
+                      </div>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${orderStatusBadgeClasses(
+                            viewOrderDetail.orderStatus
+                          )}`}
+                        >
+                          {viewOrderDetail.orderStatus
+                            .charAt(0)
+                            .toUpperCase() +
+                            viewOrderDetail.orderStatus.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3 sm:col-span-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Contact
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        <div>
+                          <span className="text-gray-500">Email:</span>{" "}
+                          {viewOrderDetail.customerEmail || "—"}
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Phone:</span>{" "}
+                          {viewOrderDetail.customerPhone || "—"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 p-3 sm:col-span-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Address
+                      </div>
+                      <div className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                        {formatAddress(viewOrderDetail)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                      Items
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead className="bg-white">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Name
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Type
+                            </th>
+                            <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Qty
+                            </th>
+                            <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Unit Price
+                            </th>
+                            <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Subtotal
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white">
+                          {viewOrderDetail.items.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan={5}
+                                className="px-4 py-4 text-center text-sm text-gray-500"
+                              >
+                                No items found.
+                              </td>
+                            </tr>
+                          ) : (
+                            viewOrderDetail.items.map((it: any, idx: number) => (
+                              <tr key={`${idx}-${it?.itemId ?? "item"}`}>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  {it?.name ?? "—"}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-700">
+                                  {it?.itemType ?? "—"}
+                                </td>
+                                <td className="px-4 py-2 text-right text-sm text-gray-700">
+                                  {typeof it?.quantity === "number"
+                                    ? it.quantity
+                                    : Number(it?.quantity ?? 0)}
+                                </td>
+                                <td className="px-4 py-2 text-right text-sm text-gray-700">
+                                  CA$
+                                  {Number(it?.unitPrice ?? 0).toLocaleString(
+                                    undefined,
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 text-right text-sm text-gray-900">
+                                  CA$
+                                  {Number(it?.subtotal ?? 0).toLocaleString(
+                                    undefined,
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeViewModal}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Close
                 </button>
               </div>
             </div>

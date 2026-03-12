@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Order from "../../../../lib/models/Order";
 import { Types } from "mongoose";
+import { sendOrderPlacedEmail } from "@/lib/mailer";
 
 function generateOrderRef() {
   const now = new Date();
@@ -43,6 +44,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const shippingAddress = customerInfo
+      ? {
+          street: String(customerInfo.street ?? "").trim(),
+          city: String(customerInfo.city ?? "").trim(),
+          state: String(customerInfo.state ?? "").trim(),
+          zipCode: String(customerInfo.zipCode ?? "").trim(),
+          country: String(customerInfo.country ?? "").trim(),
+        }
+      : null;
+
     const orderItems = items.map((item: any) => {
       const quantity = Number(item.quantity) || 1;
       const unitPrice = Number(item.pricePerGram) * Number(item.weight) || 0;
@@ -70,6 +81,7 @@ export async function POST(request: NextRequest) {
       customerName: customerInfo.customerName,
       customerEmail: customerInfo.customerEmail,
       customerPhone: customerInfo.customerPhone,
+      shippingAddress,
       items: orderItems,
       totalAmount: computedTotal,
       paymentStatus: "pending",
@@ -81,6 +93,15 @@ export async function POST(request: NextRequest) {
           changedBy: "website",
         },
       ],
+    });
+
+    // Send confirmation email (non-blocking)
+    sendOrderPlacedEmail({
+      toEmail: customerInfo.customerEmail,
+      customerName: customerInfo.customerName,
+      orderRef: order.orderRef,
+    }).catch((err) => {
+      console.error("Failed to send order email", err);
     });
 
     return NextResponse.json(

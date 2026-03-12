@@ -31,6 +31,13 @@ export interface OrderDocument extends Document {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  shippingAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  } | null;
   items: OrderItem[];
   totalAmount: number;
   paymentStatus: PaymentStatus;
@@ -123,6 +130,13 @@ const OrderSchema = new Schema<OrderDocument>(
       required: true,
       trim: true,
     },
+    shippingAddress: {
+      street: { type: String, trim: true, default: "" },
+      city: { type: String, trim: true, default: "" },
+      state: { type: String, trim: true, default: "" },
+      zipCode: { type: String, trim: true, default: "" },
+      country: { type: String, trim: true, default: "" },
+    },
     items: {
       type: [OrderItemSchema],
       required: true,
@@ -153,6 +167,13 @@ const OrderSchema = new Schema<OrderDocument>(
 );
 
 type OrderModel = Model<OrderDocument>;
+
+// In dev, Next.js HMR can keep an old compiled model around.
+// If the schema changes (e.g. adding `shippingAddress`), Mongoose will otherwise
+// reuse the old model and drop new fields on writes.
+if (process.env.NODE_ENV === "development" && mongoose.models.Order) {
+  delete mongoose.models.Order;
+}
 
 const Order =
   (mongoose.models.Order as OrderModel) ||
