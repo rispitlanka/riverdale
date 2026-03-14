@@ -58,3 +58,28 @@ export function calculateProductPrice(
   return finalPrice;
 }
 
+/** Product price: metalPrice × weight, optionally + tax (no make price) */
+export function calculateProductPriceWithTax(
+  metalBasePrice: number,
+  weight: number,
+  taxIncluded: boolean,
+  taxPercent: number | null | undefined
+): number {
+  const safeMetalBasePrice =
+    typeof metalBasePrice === "number" && !Number.isNaN(metalBasePrice)
+      ? metalBasePrice
+      : 0;
+  const safeWeight =
+    typeof weight === "number" && !Number.isNaN(weight) ? weight : 0;
+  const safeTaxPercent =
+    typeof taxPercent === "number" && !Number.isNaN(taxPercent)
+      ? taxPercent
+      : 0;
+
+  let finalPrice = safeMetalBasePrice * safeWeight;
+  if (taxIncluded && safeTaxPercent > 0) {
+    finalPrice = finalPrice * (1 + safeTaxPercent / 100);
+  }
+  return finalPrice;
+}
+

@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import Product from "../../../../../lib/models/Product";
 import Metal from "../../../../../lib/models/Metal";
 import Category from "../../../../../lib/models/Category";
-import { calculateProductPrice } from "../../../../../lib/priceUtils";
+import { calculateProductPriceWithTax } from "../../../../../lib/priceUtils";
 import { uploadImageToCloudinary } from "../../../../../lib/cloudinary";
 
 export async function GET() {
@@ -13,7 +13,7 @@ export async function GET() {
     const items = await Product.find()
       .populate("metalId", "name basePrice")
       .populate("categoryId", "name")
-      .populate("subCategoryId", "name makePrice")
+      .populate("subCategoryId", "name")
       .lean();
 
     const result = items.map((item: any) => ({
@@ -28,13 +28,14 @@ export async function GET() {
       subCategoryId:
         item.subCategoryId?._id?.toString() ?? item.subCategoryId?.toString() ?? null,
       subCategoryName: item.subCategoryId?.name ?? null,
-      subCategoryMakePrice: item.subCategoryId?.makePrice ?? null,
       weight: item.weight,
       purity: item.purity,
       unit: item.unit,
       description: item.description,
       imageUrl: item.imageUrl,
       inStock: item.inStock,
+      taxIncluded: item.taxIncluded ?? true,
+      taxPercent: item.taxPercent ?? null,
       finalPrice: item.finalPrice,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -66,6 +67,8 @@ export async function POST(request: Request) {
       description,
       imageUrl,
       inStock = true,
+      taxIncluded = true,
+      taxPercent = null,
     } = body;
 
     if (!name || !metalId || !categoryId || !weight || !purity || !unit) {
@@ -90,8 +93,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid metalId" }, { status: 400 });
     }
 
-    let makePrice = 0;
-
     if (subCategoryId) {
       const subCategory = await Category.findById(subCategoryId).lean();
       if (!subCategory) {
@@ -100,17 +101,17 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      makePrice =
-        typeof subCategory.makePrice === "number" &&
-        !Number.isNaN(subCategory.makePrice)
-          ? subCategory.makePrice
-          : 0;
     }
 
-    const finalPrice = calculateProductPrice(
+    const safeTaxPercent =
+      typeof taxPercent === "number" && !Number.isNaN(taxPercent)
+        ? taxPercent
+        : null;
+    const finalPrice = calculateProductPriceWithTax(
       metal.basePrice as number,
-      makePrice,
-      weight
+      weight,
+      Boolean(taxIncluded),
+      safeTaxPercent
     );
 
     let finalImageUrl: string | undefined = imageUrl;
@@ -141,6 +142,8 @@ export async function POST(request: Request) {
       description,
       imageUrl: finalImageUrl,
       inStock,
+      taxIncluded: Boolean(taxIncluded),
+      taxPercent: safeTaxPercent,
       finalPrice,
     });
 
@@ -167,13 +170,14 @@ export async function POST(request: Request) {
           (created as any).subCategoryId?.toString() ??
           null,
         subCategoryName: (created as any).subCategoryId?.name ?? null,
-        subCategoryMakePrice: (created as any).subCategoryId?.makePrice ?? null,
         weight: created.weight,
         purity: created.purity,
         unit: created.unit,
         description: created.description,
         imageUrl: created.imageUrl,
         inStock: created.inStock,
+        taxIncluded: created.taxIncluded,
+        taxPercent: created.taxPercent,
         finalPrice: created.finalPrice,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
