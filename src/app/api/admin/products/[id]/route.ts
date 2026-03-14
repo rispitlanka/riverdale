@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import Product from "../../../../../../lib/models/Product";
 import Metal from "../../../../../../lib/models/Metal";
 import Category from "../../../../../../lib/models/Category";
-import { calculateProductPrice } from "../../../../../../lib/priceUtils";
+import { calculateProductPriceWithTax } from "../../../../../../lib/priceUtils";
 import { uploadImageToCloudinary } from "../../../../../../lib/cloudinary";
 
 type RouteContext = {
@@ -43,8 +43,6 @@ export async function PUT(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Invalid metalId" }, { status: 400 });
     }
 
-    let makePrice = 0;
-
     if (subCategoryId) {
       const subCategory = await Category.findById(subCategoryId).lean();
       if (!subCategory) {
@@ -53,17 +51,22 @@ export async function PUT(request: Request, { params }: RouteContext) {
           { status: 400 }
         );
       }
-      makePrice =
-        typeof subCategory.makePrice === "number" &&
-        !Number.isNaN(subCategory.makePrice)
-          ? subCategory.makePrice
-          : 0;
     }
 
-    const finalPrice = calculateProductPrice(
+    const taxIncluded =
+      updates.taxIncluded !== undefined ? updates.taxIncluded : existing.taxIncluded ?? true;
+    const taxPercent =
+      updates.taxPercent !== undefined
+        ? (typeof updates.taxPercent === "number" && !Number.isNaN(updates.taxPercent)
+            ? updates.taxPercent
+            : null)
+        : (existing.taxPercent ?? null);
+
+    const finalPrice = calculateProductPriceWithTax(
       metal.basePrice as number,
-      makePrice,
-      weight
+      weight,
+      Boolean(taxIncluded),
+      taxPercent
     );
 
     let imageUrl = updates.imageUrl ?? existing.imageUrl;
@@ -91,6 +94,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
         subCategoryId,
         weight,
         imageUrl,
+        taxIncluded,
+        taxPercent,
         finalPrice,
       },
       {
@@ -100,7 +105,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     )
       .populate("metalId", "name basePrice")
       .populate("categoryId", "name")
-      .populate("subCategoryId", "name makePrice");
+      .populate("subCategoryId", "name");
 
     if (!updated) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -126,13 +131,14 @@ export async function PUT(request: Request, { params }: RouteContext) {
           (updated as any).subCategoryId?.toString() ??
           null,
         subCategoryName: (updated as any).subCategoryId?.name ?? null,
-        subCategoryMakePrice: (updated as any).subCategoryId?.makePrice ?? null,
         weight: updated.weight,
         purity: updated.purity,
         unit: updated.unit,
         description: updated.description,
         imageUrl: updated.imageUrl,
         inStock: updated.inStock,
+        taxIncluded: updated.taxIncluded,
+        taxPercent: updated.taxPercent,
         finalPrice: updated.finalPrice,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,

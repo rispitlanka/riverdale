@@ -11,6 +11,8 @@ export interface ProductDocument extends Document {
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  taxIncluded: boolean;
+  taxPercent?: number | null;
   finalPrice: number;
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +66,14 @@ const ProductSchema = new Schema<ProductDocument>(
     inStock: {
       type: Boolean,
       default: true,
+    },
+    taxIncluded: {
+      type: Boolean,
+      default: true,
+    },
+    taxPercent: {
+      type: Number,
+      default: null,
     },
     finalPrice: {
       type: Number,

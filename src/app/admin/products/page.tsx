@@ -12,13 +12,14 @@ type ProductItem = {
   categoryName: string | null;
   subCategoryId: string | null;
   subCategoryName: string | null;
-  subCategoryMakePrice: number | null;
   weight: number;
   purity: string;
   unit: string;
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  taxIncluded?: boolean;
+  taxPercent?: number | null;
   finalPrice: number;
 };
 
@@ -50,6 +51,8 @@ type FormState = {
   imageFile?: File | null;
   imagePreview?: string | null;
   inStock: boolean;
+  taxIncluded: boolean;
+  taxPercent: string;
 };
 
 const GOLD_COLOR = "#B8860B";
@@ -84,6 +87,8 @@ export default function AdminProductsPage() {
     imageFile: undefined,
     imagePreview: undefined,
     inStock: true,
+    taxIncluded: true,
+    taxPercent: "",
   });
 
   useEffect(() => {
@@ -202,7 +207,6 @@ export default function AdminProductsPage() {
 
   const estimatedFinalPrice = useMemo(() => {
     const metalPrice = selectedMetal?.basePrice ?? 0;
-    const makePrice = selectedSubCategory?.makePrice ?? 0;
 
     const weight =
       form.weight.trim() === ""
@@ -213,9 +217,17 @@ export default function AdminProductsPage() {
       return 0;
     }
 
-    const final = metalPrice * weight + makePrice;
+    const taxPercent =
+      form.taxIncluded && form.taxPercent.trim() !== ""
+        ? Number.parseFloat(form.taxPercent.replace(",", "."))
+        : 0;
+
+    let final = metalPrice * weight;
+    if (form.taxIncluded && !Number.isNaN(taxPercent) && taxPercent > 0) {
+      final = final * (1 + taxPercent / 100);
+    }
     return Number.isFinite(final) ? final : 0;
-  }, [selectedMetal, selectedSubCategory, form.weight]);
+  }, [selectedMetal, form.weight, form.taxIncluded, form.taxPercent]);
 
   function openCreateForm() {
     setForm({
@@ -230,6 +242,8 @@ export default function AdminProductsPage() {
       imageFile: undefined,
       imagePreview: undefined,
       inStock: true,
+      taxIncluded: true,
+      taxPercent: "",
     });
     setIsFormOpen(true);
   }
@@ -248,6 +262,11 @@ export default function AdminProductsPage() {
       imageFile: undefined,
       imagePreview: item.imageUrl ?? null,
       inStock: item.inStock,
+      taxIncluded: item.taxIncluded ?? true,
+      taxPercent:
+        item.taxPercent !== null && item.taxPercent !== undefined
+          ? String(item.taxPercent)
+          : "",
     });
     setIsFormOpen(true);
   }
@@ -307,6 +326,16 @@ export default function AdminProductsPage() {
         throw new Error("Please enter a valid weight.");
       }
 
+      let taxPercentNumber: number | null = null;
+      if (form.taxIncluded && form.taxPercent.trim() !== "") {
+        const parsed = Number.parseFloat(
+          form.taxPercent.replace(",", ".")
+        );
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          taxPercentNumber = parsed;
+        }
+      }
+
       const payload: any = {
         name: form.name.trim(),
         metalId: form.metalId,
@@ -318,6 +347,8 @@ export default function AdminProductsPage() {
         description: form.description.trim(),
         imageUrl: form.imagePreview,
         inStock: form.inStock,
+        taxIncluded: form.taxIncluded,
+        taxPercent: taxPercentNumber,
       };
 
       const isEdit = Boolean(form.id);
@@ -688,15 +719,8 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-700 flex items-center justify-between">
-                    <span>Sub Category</span>
-                    {selectedSubCategory &&
-                      typeof selectedSubCategory.makePrice === "number" && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-[#B8860B]/10 px-2 py-0.5 text-[10px] font-medium text-[#B8860B]">
-                          Make Price: CA$
-                          {selectedSubCategory.makePrice.toLocaleString()}
-                        </span>
-                      )}
+                  <label className="text-xs font-medium text-gray-700">
+                    Sub Category
                   </label>
                   <div className="relative">
                     <select
@@ -853,6 +877,59 @@ export default function AdminProductsPage() {
                     </span>
                   </button>
                 </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700">
+                    Tax
+                  </label>
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleInputChange("taxIncluded", !form.taxIncluded)
+                      }
+                      className="inline-flex items-center rounded-full border border-gray-300 bg-gray-50 px-1 py-0.5 text-xs shadow-inner"
+                    >
+                      <span
+                        className={`px-2 py-0.5 rounded-full ${
+                          form.taxIncluded
+                            ? "bg-[#B8860B] text-white shadow-sm"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        Tax Included
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full ${
+                          !form.taxIncluded
+                            ? "bg-gray-500 text-white shadow-sm"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        Tax Excluded
+                      </span>
+                    </button>
+                    {form.taxIncluded && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-500">
+                          Tax Percentage
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={form.taxPercent}
+                          onChange={(e) =>
+                            handleInputChange("taxPercent", e.target.value)
+                          }
+                          className="block w-24 rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                          placeholder="e.g. 3"
+                        />
+                        <span className="text-[11px] text-gray-500">%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
@@ -861,12 +938,14 @@ export default function AdminProductsPage() {
                     Estimated Final Price
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Formula: (Metal Price × Weight) + Make Price
+                    Formula: Metal Price × Weight
+                    {form.taxIncluded && form.taxPercent.trim() !== ""
+                      ? " + Tax"
+                      : ""}
                   </div>
                   <div className="text-[11px] text-gray-500">
                     Calculated from current selections. Actual price is
-                    recomputed on the server using live metal and category
-                    prices.
+                    recomputed on the server using live metal prices.
                   </div>
                 </div>
                 <div className="text-right">
