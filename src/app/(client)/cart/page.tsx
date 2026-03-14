@@ -46,7 +46,7 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,13 +62,16 @@ export default function CartPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || 'Failed to create order');
+        toast.error(data.error || 'Failed to create checkout session');
         return;
       }
 
-      toast.success('Order placed successfully!');
-      clearCart();
-      router.push('/checkout/success');
+      if (data.url) {
+        clearCart();
+        window.location.href = data.url;
+      } else {
+        toast.error('Invalid checkout response');
+      }
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error('Failed to process checkout');
@@ -203,7 +206,7 @@ export default function CartPage() {
                     disabled={loading}
                     className="w-full bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold py-6 text-lg"
                   >
-                    {loading ? 'Processing...' : `Make Order (${formatCurrency(total)})`}
+                    {loading ? 'Redirecting to Stripe...' : `Pay with Stripe (${formatCurrency(total)})`}
                   </Button>
               </form>
             </CardContent>

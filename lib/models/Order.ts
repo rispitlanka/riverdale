@@ -41,6 +41,7 @@ export interface OrderDocument extends Document {
   items: OrderItem[];
   totalAmount: number;
   paymentStatus: PaymentStatus;
+  stripeSessionId?: string | null;
   orderStatus: OrderStatus;
   statusHistory: StatusHistoryEntry[];
   createdAt: Date;
@@ -150,6 +151,11 @@ const OrderSchema = new Schema<OrderDocument>(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+    },
+    stripeSessionId: {
+      type: String,
+      trim: true,
+      default: null,
     },
     orderStatus: {
       type: String,

@@ -17,10 +17,8 @@ function SuccessContent() {
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    const orderId = searchParams.get('order_id');
 
-    if (sessionId && orderId) {
-      // Verify payment and update order status
+    if (sessionId) {
       fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
