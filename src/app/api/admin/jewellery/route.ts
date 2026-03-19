@@ -48,14 +48,7 @@ async function calculateFinalPrice({
   const numericWeight =
     typeof weight === "number" && !Number.isNaN(weight) ? weight : 0;
 
-  let finalPrice = (metalBasePrice + makePrice) * numericWeight + numericStonePrice;
-
-  const numericTaxPercent =
-    typeof taxPercent === "number" && !Number.isNaN(taxPercent) ? taxPercent : 0;
-
-  if (taxIncluded && numericTaxPercent > 0) {
-    finalPrice = finalPrice * (1 + numericTaxPercent / 100);
-  }
+  const finalPrice = (metalBasePrice + makePrice) * numericWeight + numericStonePrice;
 
   return finalPrice;
 }

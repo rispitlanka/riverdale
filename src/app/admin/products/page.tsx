@@ -217,17 +217,9 @@ export default function AdminProductsPage() {
       return 0;
     }
 
-    const taxPercent =
-      form.taxIncluded && form.taxPercent.trim() !== ""
-        ? Number.parseFloat(form.taxPercent.replace(",", "."))
-        : 0;
-
-    let final = metalPrice * weight;
-    if (form.taxIncluded && !Number.isNaN(taxPercent) && taxPercent > 0) {
-      final = final * (1 + taxPercent / 100);
-    }
+    const final = metalPrice * weight;
     return Number.isFinite(final) ? final : 0;
-  }, [selectedMetal, form.weight, form.taxIncluded, form.taxPercent]);
+  }, [selectedMetal, form.weight]);
 
   function openCreateForm() {
     setForm({
@@ -938,14 +930,7 @@ export default function AdminProductsPage() {
                     Estimated Final Price
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Formula: Metal Price × Weight
-                    {form.taxIncluded && form.taxPercent.trim() !== ""
-                      ? " + Tax"
-                      : ""}
-                  </div>
-                  <div className="text-[11px] text-gray-500">
-                    Calculated from current selections. Actual price is
-                    recomputed on the server using live metal prices.
+                    Formula: Metal Price × Weight. Tax is applied separately at checkout.
                   </div>
                 </div>
                 <div className="text-right">

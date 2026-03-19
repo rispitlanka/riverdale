@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, getCartTotal, getCartTax, clearCart } = useCart();
   const [isCheckout, setIsCheckout] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({
     customerName: '',
@@ -29,7 +29,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(false);
 
   const subtotal = getCartTotal();
-  const tax = subtotal * 0.08; // 8% tax
+  const tax = getCartTax();
   const shippingCost = subtotal > 1000 ? 0 : 25; // Free shipping over $1000
   const total = subtotal + tax + shippingCost;
 
@@ -249,7 +249,7 @@ export default function CartPage() {
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Tax (8%)</span>
+                  <span>Tax</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
@@ -363,7 +363,7 @@ export default function CartPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Tax (8%)</span>
+                  <span>Tax</span>
                   <span>{formatCurrency(tax)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
