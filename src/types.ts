@@ -15,6 +15,8 @@ export interface IMetal {
   category?: { _id: string; name: string } | string | null;
   stockStatus: "in-stock" | "out-of-stock";
   sku?: string;
+  taxIncluded?: boolean;
+  taxPercent?: number | null;
 }
 
 export interface ITimeSlot {

@@ -36,6 +36,8 @@ function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
     images,
     category,
     stockStatus: item.inStock ? "in-stock" : "out-of-stock",
+    taxIncluded: item.taxIncluded ?? false,
+    taxPercent: item.taxPercent ?? null,
     kind,
   };
 }

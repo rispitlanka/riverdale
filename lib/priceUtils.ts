@@ -27,12 +27,8 @@ export function calculateJewelleryPrice(
       ? taxPercent
       : 0;
 
-  let finalPrice =
+  const finalPrice =
     (safeMetalBasePrice + safeMakePrice) * safeWeight + safeStonePrice;
-
-  if (taxIncluded && safeTaxPercent > 0) {
-    finalPrice = finalPrice * (1 + safeTaxPercent / 100);
-  }
 
   return finalPrice;
 }
@@ -76,10 +72,7 @@ export function calculateProductPriceWithTax(
       ? taxPercent
       : 0;
 
-  let finalPrice = safeMetalBasePrice * safeWeight;
-  if (taxIncluded && safeTaxPercent > 0) {
-    finalPrice = finalPrice * (1 + safeTaxPercent / 100);
-  }
+  const finalPrice = safeMetalBasePrice * safeWeight;
   return finalPrice;
 }
 

@@ -10,6 +10,7 @@ interface CartContextType {
   updateQuantity: (metalId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  getCartTax: () => number;
   getCartCount: () => number;
 }
 
@@ -79,6 +80,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, 0);
   };
 
+  const getCartTax = () => {
+    return cart.reduce((total, item) => {
+      if (item.taxIncluded && item.taxPercent && item.taxPercent > 0) {
+        const itemTotal = item.pricePerGram * item.weight * item.quantity;
+        return total + itemTotal * (item.taxPercent / 100);
+      }
+      return total;
+    }, 0);
+  };
+
   const getCartCount = () => {
     return cart.reduce((count, item) => count + item.quantity, 0);
   };
@@ -92,6 +103,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         getCartTotal,
+        getCartTax,
         getCartCount,
       }}
     >

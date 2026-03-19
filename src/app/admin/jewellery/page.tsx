@@ -217,23 +217,15 @@ export default function AdminJewelleryPage() {
       form.includeStonePrice && form.stonePrice.trim() !== ""
         ? Number.parseFloat(form.stonePrice.replace(",", "."))
         : 0;
-    const taxPercent =
-      form.taxIncluded && form.taxPercent.trim() !== ""
-        ? Number.parseFloat(form.taxPercent.replace(",", "."))
-        : 0;
 
-    if (Number.isNaN(weight) || Number.isNaN(stone) || Number.isNaN(taxPercent)) {
+    if (Number.isNaN(weight) || Number.isNaN(stone)) {
       return 0;
     }
 
-    let final = (metalPrice + makePrice) * weight + stone;
-
-    if (form.taxIncluded && taxPercent > 0) {
-      final = final * (1 + taxPercent / 100);
-    }
+    const final = (metalPrice + makePrice) * weight + stone;
 
     return Number.isFinite(final) ? final : 0;
-  }, [selectedMetal, selectedSubCategory, form.weight, form.stonePrice, form.taxIncluded, form.taxPercent, form.includeStonePrice]);
+  }, [selectedMetal, selectedSubCategory, form.weight, form.stonePrice, form.includeStonePrice]);
 
   function openCreateForm() {
     setForm({
@@ -998,9 +990,8 @@ export default function AdminJewelleryPage() {
                     Estimated Final Price
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Calculated from current selections. Actual price is
-                    recomputed on the server using live metal and category
-                    prices.
+                    Formula: (Metal Price + Make Price) × Weight + Stone Price.
+                    Tax is applied separately at checkout.
                   </div>
                 </div>
                 <div className="text-right">
