@@ -46,7 +46,8 @@ export default function CartPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      /** Initial version: place order without payment gateway — team follows up by phone/email */
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,19 +63,47 @@ export default function CartPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || 'Failed to create checkout session');
+        toast.error(data.error || 'Failed to place order');
         return;
       }
 
+      clearCart();
+      const ref = typeof data.orderRef === 'string' ? data.orderRef : '';
+      router.push(
+        ref
+          ? `/checkout/success?orderRef=${encodeURIComponent(ref)}`
+          : '/checkout/success'
+      );
+      toast.success('Order placed successfully');
+
+      /* ─── PAYMENT GATEWAY (Stripe) — restore for paid checkout ───
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          customerInfo: checkoutForm,
+          subtotal,
+          tax,
+          shippingCost,
+          total,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to create checkout session');
+        return;
+      }
       if (data.url) {
         clearCart();
         window.location.href = data.url;
       } else {
         toast.error('Invalid checkout response');
       }
+      ─────────────────────────────────────────────────────────────── */
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error('Failed to process checkout');
+      toast.error('Failed to place order');
     } finally {
       setLoading(false);
     }
@@ -112,7 +141,9 @@ export default function CartPage() {
             ← Back to Cart
           </Button>
           <h1 className="text-4xl font-bold text-foreground mb-2">Checkout</h1>
-          <p className="text-muted-foreground">Complete your purchase</p>
+          <p className="text-muted-foreground">
+            Enter your details — our team will contact you within hours to confirm your order.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -206,7 +237,7 @@ export default function CartPage() {
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold py-6 text-lg"
                 >
-                  {loading ? 'Redirecting to Stripe...' : `Pay with Stripe (${formatCurrency(total)})`}
+                  {loading ? 'Placing order...' : `Place order (${formatCurrency(total)})`}
                 </Button>
               </form>
             </CardContent>

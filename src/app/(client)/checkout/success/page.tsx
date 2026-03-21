@@ -1,69 +1,46 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
 import { Suspense } from 'react';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { clearCart } = useCart();
-  const [orderNumber, setOrderNumber] = useState('');
-  const [loading, setLoading] = useState(true);
+  const orderRef = searchParams.get('orderRef') ?? '';
 
+  /* Stripe payment verification — disabled for initial version
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-
     if (sessionId) {
-      fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.order) {
-            setOrderNumber(data.order.orderNumber);
-            clearCart(); // Clear the cart after successful payment
-          }
-        })
-        .catch(error => console.error('Error verifying payment:', error))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+      fetch('/api/verify-payment', { ... })
+        .then(...)
+        ...
     }
   }, [searchParams, clearCart]);
-
-  if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <p className="text-foreground">Loading...</p>
-      </div>
-    );
-  }
+  */
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <Card className="text-center">
+      <Card className="text-center border-border">
         <CardContent className="py-12">
           <div className="text-6xl mb-6">✅</div>
-          <h1 className="text-3xl font-bold text-foreground mb-4">Payment Successful!</h1>
-          <p className="text-muted-foreground mb-6">
-            Thank you for your purchase. Your order has been confirmed.
+          <h1 className="text-3xl font-bold text-foreground mb-4">
+            Your Order Placed Successfully
+          </h1>
+          <p className="text-lg text-muted-foreground mb-2 max-w-md mx-auto">
+            Within hours our team will contact you.
           </p>
-          {orderNumber && (
-            <div className="bg-muted border border-border rounded-lg p-6 mb-6">
-              <p className="text-sm text-muted-foreground mb-2">Your Order Number</p>
-              <p className="text-2xl font-bold text-[#9A0156]">{orderNumber}</p>
+          <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">
+            Thank you for shopping with us. We&apos;ll reach out using the contact details you provided to confirm your order.
+          </p>
+          {orderRef ? (
+            <div className="bg-muted border border-border rounded-lg p-6 mb-8">
+              <p className="text-sm text-muted-foreground mb-2">Order reference</p>
+              <p className="text-2xl font-bold text-[#9A0156]">{orderRef}</p>
             </div>
-          )}
-          <p className="text-sm text-muted-foreground mb-8">
-            A confirmation email has been sent to your email address with order details.
-          </p>
+          ) : null}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products">
               <Button className="bg-gradient-to-r from-[#9A0156] to-[#c0016d] hover:from-[#c0016d] hover:to-[#d40179] text-white font-bold">
@@ -71,9 +48,7 @@ function SuccessContent() {
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline">
-                Go to Homepage
-              </Button>
+              <Button variant="outline">Go to Homepage</Button>
             </Link>
           </div>
         </CardContent>
@@ -84,13 +59,14 @@ function SuccessContent() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense fallback={
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <p className="text-foreground">Loading...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <p className="text-foreground">Loading...</p>
+        </div>
+      }
+    >
       <SuccessContent />
     </Suspense>
   );
 }
-
