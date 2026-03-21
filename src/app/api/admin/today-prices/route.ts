@@ -87,60 +87,82 @@ export async function PUT(request: Request) {
 
     const { startOfToday } = getTodayRange();
 
-    const operations = body
-      .map((row) => {
-        const { metalId, price, showOnSite } = row;
+    type ValidRow = {
+      objectId: Types.ObjectId;
+      price: number;
+      showOnSite: boolean;
+    };
 
-        if (!metalId) {
-          return null;
-        }
+    /** Last occurrence wins if the same metal appears more than once */
+    const rowByMetalId = new Map<string, ValidRow>();
 
-        if (typeof price !== "number" || Number.isNaN(price)) {
-          return null;
-        }
+    for (const row of body) {
+      const { metalId, price, showOnSite } = row;
 
-        let objectId: Types.ObjectId;
-        try {
-          objectId = new Types.ObjectId(metalId);
-        } catch {
-          return null;
-        }
+      if (!metalId || typeof price !== "number" || Number.isNaN(price)) {
+        continue;
+      }
 
-        return {
-          updateOne: {
-            filter: { metalId: objectId, date: startOfToday },
-            update: {
-              $set: {
-                metalId: objectId,
-                price,
-                showOnSite: Boolean(showOnSite),
-                date: startOfToday,
-              },
-            },
-            upsert: true,
-          },
-        };
-      })
-      .filter(Boolean) as Parameters<
-      typeof TodayPrice.collection.bulkWrite
-    >[0];
+      let objectId: Types.ObjectId;
+      try {
+        objectId = new Types.ObjectId(metalId);
+      } catch {
+        continue;
+      }
 
-    if (operations.length === 0) {
+      rowByMetalId.set(objectId.toString(), {
+        objectId,
+        price,
+        showOnSite: Boolean(showOnSite),
+      });
+    }
+
+    const uniqueRows = Array.from(rowByMetalId.values());
+
+    if (uniqueRows.length === 0) {
       return NextResponse.json(
         { message: "No valid price rows to update." },
         { status: 400 }
       );
     }
 
+    const operations = uniqueRows.map((r) => ({
+      updateOne: {
+        filter: { metalId: r.objectId, date: startOfToday },
+        update: {
+          $set: {
+            metalId: r.objectId,
+            price: r.price,
+            showOnSite: r.showOnSite,
+            date: startOfToday,
+          },
+        },
+        upsert: true,
+      },
+    })) as Parameters<typeof TodayPrice.collection.bulkWrite>[0];
+
     const bulkResult = await TodayPrice.collection.bulkWrite(operations, {
+      ordered: false,
+    });
+
+    // Keep Metal.basePrice in sync with today's price (used for jewellery / product pricing)
+    const metalOps = uniqueRows.map((r) => ({
+      updateOne: {
+        filter: { _id: r.objectId },
+        update: { $set: { basePrice: r.price } },
+      },
+    }));
+
+    const metalBulk = await Metal.collection.bulkWrite(metalOps, {
       ordered: false,
     });
 
     return NextResponse.json(
       {
-        message: "Today prices updated successfully.",
+        message: "Today prices updated successfully; metal base prices synced.",
         modifiedCount: bulkResult.modifiedCount ?? 0,
         upsertedCount: bulkResult.upsertedCount ?? 0,
+        metalsUpdated: metalBulk.modifiedCount ?? 0,
       },
       { status: 200 }
     );

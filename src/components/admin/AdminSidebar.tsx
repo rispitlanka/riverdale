@@ -23,11 +23,11 @@ const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin", Icon: HomeIcon },
   { label: "Categories", href: "/admin/categories", Icon: TagIcon },
   { label: "Metals", href: "/admin/metals", Icon: BeakerIcon },
-  {
-    label: "Bulk Metal Update",
-    href: "/admin/metals/bulk-update",
-    Icon: BeakerIcon,
-  },
+  // {
+  //   label: "Bulk Metal Update",
+  //   href: "/admin/metals/bulk-update",
+  //   Icon: BeakerIcon,
+  // },
   { label: "Jewellery", href: "/admin/jewellery", Icon: SparklesIcon },
   { label: "Products", href: "/admin/products", Icon: CubeIcon },
   { label: "Today Prices", href: "/admin/today-prices", Icon: CurrencyDollarIcon },
