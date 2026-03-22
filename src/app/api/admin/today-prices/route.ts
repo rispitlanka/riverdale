@@ -3,6 +3,12 @@ import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import Metal from "../../../../../lib/models/Metal";
 import TodayPrice from "../../../../../lib/models/TodayPrice";
+import Jewellery from "../../../../../lib/models/Jewellery";
+import Product from "../../../../../lib/models/Product";
+import {
+  calculateJewelleryPrice,
+  calculateProductPriceWithTax,
+} from "../../../../../lib/priceUtils";
 
 type TodayPriceRow = {
   metalId?: string;
@@ -157,12 +163,100 @@ export async function PUT(request: Request) {
       ordered: false,
     });
 
+    // Recalculate finalPrice for Jewellery and Products that use these metals
+    const metalPriceMap = new Map(
+      uniqueRows.map((r) => [r.objectId.toString(), r.price])
+    );
+
+    type BulkUpdateOp = {
+      updateOne: {
+        filter: { _id: Types.ObjectId };
+        update: { $set: { finalPrice: number } };
+      };
+    };
+    const jewelleryBulkOps: BulkUpdateOp[] = [];
+    const jewelleryItems = await Jewellery.find({
+      metalId: { $in: uniqueRows.map((r) => r.objectId) },
+    })
+      .populate<{ subCategoryId?: { makePrice?: number } | null }>("subCategoryId", "makePrice")
+      .lean();
+
+    for (const j of jewelleryItems) {
+      const newMetalPrice = metalPriceMap.get(
+        (j.metalId as Types.ObjectId).toString()
+      );
+      if (newMetalPrice === undefined) continue;
+
+      const rawMake = typeof j.subCategoryId === "object" ? j.subCategoryId?.makePrice : undefined;
+      const makePrice = typeof rawMake === "number" && !Number.isNaN(rawMake) ? rawMake : 0;
+      const newFinalPrice = calculateJewelleryPrice(
+        newMetalPrice,
+        makePrice,
+        j.weight ?? 0,
+        j.stonePrice ?? 0,
+        false,
+        null
+      );
+      jewelleryBulkOps.push({
+        updateOne: {
+          filter: { _id: j._id },
+          update: { $set: { finalPrice: newFinalPrice } },
+        },
+      });
+    }
+
+    let jewelleryUpdated = 0;
+    if (jewelleryBulkOps.length > 0) {
+      const jewelleryBulk = await Jewellery.collection.bulkWrite(
+        jewelleryBulkOps as Parameters<typeof Jewellery.collection.bulkWrite>[0],
+        { ordered: false }
+      );
+      jewelleryUpdated = jewelleryBulk.modifiedCount ?? 0;
+    }
+
+    const productBulkOps: BulkUpdateOp[] = [];
+    const productItems = await Product.find({
+      metalId: { $in: uniqueRows.map((r) => r.objectId) },
+    }).lean();
+
+    for (const p of productItems) {
+      const newMetalPrice = metalPriceMap.get(
+        (p.metalId as Types.ObjectId).toString()
+      );
+      if (newMetalPrice === undefined) continue;
+
+      const newFinalPrice = calculateProductPriceWithTax(
+        newMetalPrice,
+        p.weight ?? 0,
+        false,
+        null
+      );
+      productBulkOps.push({
+        updateOne: {
+          filter: { _id: p._id },
+          update: { $set: { finalPrice: newFinalPrice } },
+        },
+      });
+    }
+
+    let productsUpdated = 0;
+    if (productBulkOps.length > 0) {
+      const productBulk = await Product.collection.bulkWrite(
+        productBulkOps as Parameters<typeof Product.collection.bulkWrite>[0],
+        { ordered: false }
+      );
+      productsUpdated = productBulk.modifiedCount ?? 0;
+    }
+
     return NextResponse.json(
       {
-        message: "Today prices updated successfully; metal base prices synced.",
+        message:
+          "Today prices updated successfully; metals, jewellery and products synced.",
         modifiedCount: bulkResult.modifiedCount ?? 0,
         upsertedCount: bulkResult.upsertedCount ?? 0,
         metalsUpdated: metalBulk.modifiedCount ?? 0,
+        jewelleryUpdated,
+        productsUpdated,
       },
       { status: 200 }
     );

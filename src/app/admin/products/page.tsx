@@ -82,7 +82,7 @@ export default function AdminProductsPage() {
     subCategoryId: "",
     weight: "",
     purity: "",
-    unit: "",
+    unit: "grams",
     description: "",
     imageFile: undefined,
     imagePreview: undefined,
@@ -229,7 +229,7 @@ export default function AdminProductsPage() {
       subCategoryId: "",
       weight: "",
       purity: "",
-      unit: "",
+      unit: "grams",
       description: "",
       imageFile: undefined,
       imagePreview: undefined,
@@ -249,7 +249,7 @@ export default function AdminProductsPage() {
       subCategoryId: item.subCategoryId ?? "",
       weight: item.weight ? String(item.weight) : "",
       purity: item.purity ?? "",
-      unit: item.unit ?? "",
+      unit: "grams",
       description: item.description ?? "",
       imageFile: undefined,
       imagePreview: item.imageUrl ?? null,
@@ -335,7 +335,7 @@ export default function AdminProductsPage() {
         subCategoryId: form.subCategoryId || null,
         weight: weightNumber,
         purity: form.purity.trim(),
-        unit: form.unit.trim(),
+        unit: "grams",
         description: form.description.trim(),
         imageUrl: form.imagePreview,
         inStock: form.inStock,
@@ -782,13 +782,9 @@ export default function AdminProductsPage() {
                   </label>
                   <input
                     type="text"
-                    required
-                    value={form.unit}
-                    onChange={(e) =>
-                      handleInputChange("unit", e.target.value)
-                    }
-                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
-                    placeholder="e.g. grams"
+                    readOnly
+                    value="grams"
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-gray-50 text-gray-600"
                   />
                 </div>
 
