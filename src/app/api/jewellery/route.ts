@@ -15,6 +15,7 @@ export async function GET() {
     const result = items.map((item: any) => ({
       id: item._id.toString(),
       name: item.name,
+      sku: item.sku ?? "",
       metalId: item.metalId?._id?.toString() ?? item.metalId?.toString() ?? null,
       metalName: item.metalId?.name ?? null,
       categoryId:

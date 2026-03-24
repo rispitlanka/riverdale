@@ -13,6 +13,7 @@ export interface OrderItem {
   itemId: Types.ObjectId;
   itemType: OrderItemType;
   name: string;
+  sku?: string;
   metalType?: string;
   quantity: number;
   unitPrice: number;
@@ -63,6 +64,11 @@ const OrderItemSchema = new Schema<OrderItem>(
       type: String,
       required: true,
       trim: true,
+    },
+    sku: {
+      type: String,
+      trim: true,
+      default: "",
     },
     metalType: {
       type: String,
