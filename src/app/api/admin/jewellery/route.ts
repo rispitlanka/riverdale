@@ -66,6 +66,7 @@ export async function GET() {
     const result = items.map((item: any) => ({
       id: item._id.toString(),
       name: item.name,
+      sku: item.sku ?? "",
       metalId: item.metalId?._id?.toString() ?? item.metalId?.toString() ?? null,
       metalName: item.metalId?.name ?? null,
       metalBasePrice: item.metalId?.basePrice ?? null,
@@ -107,6 +108,7 @@ export async function POST(request: Request) {
 
     const {
       name,
+      sku,
       metalId,
       categoryId,
       subCategoryId,
@@ -185,6 +187,7 @@ export async function POST(request: Request) {
 
     const jewellery = await Jewellery.create({
       name,
+      sku: typeof sku === "string" ? sku.trim() : "",
       metalId,
       categoryId,
       subCategoryId: subCategoryId || null,
@@ -209,6 +212,7 @@ export async function POST(request: Request) {
       {
         id: created._id.toString(),
         name: created.name,
+        sku: created.sku ?? "",
         metalId: created.metalId?._id?.toString() ?? created.metalId?.toString() ?? null,
         metalName: (created as any).metalId?.name ?? null,
         metalBasePrice: (created as any).metalId?.basePrice ?? null,

@@ -28,6 +28,7 @@ function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
   return {
     _id: item._id.toString(),
     name: item.name,
+    sku: item.sku ?? "",
     description: item.description ?? "",
     purity: item.purity ?? "",
     weight,

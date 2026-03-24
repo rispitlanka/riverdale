@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
         itemId: new Types.ObjectId(item._id),
         itemType: item.kind === "jewellery" || item.kind === "product" ? item.kind : "product",
         name: item.name,
+        sku: typeof item.sku === "string" ? item.sku : "",
         metalType: item.metalType ?? "",
         quantity,
         unitPrice,

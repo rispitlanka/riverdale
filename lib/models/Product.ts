@@ -2,6 +2,7 @@ import mongoose, { Schema, Model, Document, Types } from 'mongoose';
 
 export interface ProductDocument extends Document {
   name: string;
+  sku?: string;
   metalId: Types.ObjectId;
   categoryId: Types.ObjectId;
   subCategoryId?: Types.ObjectId;
@@ -24,6 +25,11 @@ const ProductSchema = new Schema<ProductDocument>(
       type: String,
       required: true,
       trim: true,
+    },
+    sku: {
+      type: String,
+      trim: true,
+      default: "",
     },
     metalId: {
       type: Schema.Types.ObjectId,

@@ -167,6 +167,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
       {
         id: updated._id.toString(),
         name: updated.name,
+        sku: updated.sku ?? "",
         metalId: updated.metalId?._id?.toString() ?? updated.metalId?.toString() ?? null,
         metalName: (updated as any).metalId?.name ?? null,
         metalBasePrice: (updated as any).metalId?.basePrice ?? null,

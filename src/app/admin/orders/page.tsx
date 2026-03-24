@@ -801,6 +801,9 @@ export default function AdminOrdersPage() {
                               Name
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              SKU
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                               Type
                             </th>
                             <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -818,7 +821,7 @@ export default function AdminOrdersPage() {
                           {viewOrderDetail.items.length === 0 ? (
                             <tr>
                               <td
-                                colSpan={5}
+                                colSpan={6}
                                 className="px-4 py-4 text-center text-sm text-gray-500"
                               >
                                 No items found.
@@ -829,6 +832,9 @@ export default function AdminOrdersPage() {
                               <tr key={`${idx}-${it?.itemId ?? "item"}`}>
                                 <td className="px-4 py-2 text-sm text-gray-900">
                                   {it?.name ?? "—"}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-700">
+                                  {it?.sku || "—"}
                                 </td>
                                 <td className="px-4 py-2 text-sm text-gray-700">
                                   {it?.itemType ?? "—"}

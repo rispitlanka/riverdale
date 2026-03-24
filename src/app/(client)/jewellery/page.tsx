@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 interface IJewelleryItem {
   id: string;
   name: string;
+  sku?: string;
   metalId: string | null;
   metalName: string | null;
   categoryId: string | null;
@@ -36,6 +37,7 @@ function jewelleryToCartItem(item: IJewelleryItem): IMetal {
   return {
     _id: item.id,
     name: item.name,
+    sku: item.sku ?? "",
     purity: item.purity,
     weight: item.weight,
     weightUnit: item.unit,

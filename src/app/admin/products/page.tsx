@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 type ProductItem = {
   id: string;
   name: string;
+  sku?: string;
   metalId: string | null;
   metalName: string | null;
   categoryId: string | null;
@@ -41,6 +42,7 @@ type CategoryOption = {
 type FormState = {
   id?: string;
   name: string;
+  sku: string;
   metalId: string;
   categoryId: string;
   subCategoryId: string;
@@ -77,6 +79,7 @@ export default function AdminProductsPage() {
 
   const [form, setForm] = useState<FormState>({
     name: "",
+    sku: "",
     metalId: "",
     categoryId: "",
     subCategoryId: "",
@@ -224,6 +227,7 @@ export default function AdminProductsPage() {
   function openCreateForm() {
     setForm({
       name: "",
+      sku: "",
       metalId: "",
       categoryId: "",
       subCategoryId: "",
@@ -244,6 +248,7 @@ export default function AdminProductsPage() {
     setForm({
       id: item.id,
       name: item.name,
+      sku: item.sku ?? "",
       metalId: item.metalId ?? "",
       categoryId: item.categoryId ?? "",
       subCategoryId: item.subCategoryId ?? "",
@@ -330,6 +335,7 @@ export default function AdminProductsPage() {
 
       const payload: any = {
         name: form.name.trim(),
+        sku: form.sku.trim(),
         metalId: form.metalId,
         categoryId: form.categoryId,
         subCategoryId: form.subCategoryId || null,
@@ -445,6 +451,9 @@ export default function AdminProductsPage() {
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  SKU
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Metal
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -471,7 +480,7 @@ export default function AdminProductsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     Loading products...
@@ -480,7 +489,7 @@ export default function AdminProductsPage() {
               ) : items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     No products found. Start by adding a new product.
@@ -504,6 +513,9 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-900">
                       {item.name}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-sm text-gray-700">
+                      {item.sku || "—"}
                     </td>
                     <td className="px-4 py-3 align-middle text-sm text-gray-700">
                       {item.metalName || "—"}
@@ -646,6 +658,21 @@ export default function AdminProductsPage() {
                     }
                     className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
                     placeholder="e.g. Gold Pendant"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={form.sku}
+                    onChange={(e) =>
+                      handleInputChange("sku", e.target.value)
+                    }
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                    placeholder="e.g. PRO-1001"
                   />
                 </div>
 
