@@ -24,6 +24,12 @@ function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
       : null;
 
   const images: string[] = item.imageUrl ? [item.imageUrl] : [];
+  const stockQuantity =
+    typeof item.stockQuantity === "number"
+      ? item.stockQuantity
+      : item.inStock
+      ? 1
+      : 0;
 
   return {
     _id: item._id.toString(),
@@ -36,7 +42,8 @@ function mapItemToPublicProduct(item: any, kind: "jewellery" | "product") {
     pricePerGram,
     images,
     category,
-    stockStatus: item.inStock ? "in-stock" : "out-of-stock",
+    stockStatus: stockQuantity > 0 ? "in-stock" : "out-of-stock",
+    stockQuantity,
     taxIncluded: item.taxIncluded ?? false,
     taxPercent: item.taxPercent ?? null,
     kind,

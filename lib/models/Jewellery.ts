@@ -13,6 +13,7 @@ export interface JewelleryDocument extends Document {
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  stockQuantity: number;
   taxIncluded: boolean;
   taxPercent?: number | null;
   finalPrice: number;
@@ -78,6 +79,12 @@ const JewellerySchema = new Schema<JewelleryDocument>(
       type: Boolean,
       default: true,
     },
+    stockQuantity: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
     taxIncluded: {
       type: Boolean,
       default: true,
@@ -97,6 +104,12 @@ const JewellerySchema = new Schema<JewelleryDocument>(
 );
 
 type JewelleryModel = Model<JewelleryDocument>;
+
+// In dev, Next.js HMR can keep an old compiled model around.
+// If the schema changes, Mongoose may reuse stale schema fields.
+if (process.env.NODE_ENV === "development" && mongoose.models.Jewellery) {
+  delete mongoose.models.Jewellery;
+}
 
 const Jewellery =
   (mongoose.models.Jewellery as JewelleryModel) ||

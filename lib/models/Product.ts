@@ -12,6 +12,7 @@ export interface ProductDocument extends Document {
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  stockQuantity: number;
   taxIncluded: boolean;
   taxPercent?: number | null;
   finalPrice: number;
@@ -73,6 +74,12 @@ const ProductSchema = new Schema<ProductDocument>(
       type: Boolean,
       default: true,
     },
+    stockQuantity: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
     taxIncluded: {
       type: Boolean,
       default: true,
@@ -92,6 +99,12 @@ const ProductSchema = new Schema<ProductDocument>(
 );
 
 type ProductModel = Model<ProductDocument>;
+
+// In dev, Next.js HMR can keep an old compiled model around.
+// If the schema changes, Mongoose may reuse stale schema fields.
+if (process.env.NODE_ENV === "development" && mongoose.models.Product) {
+  delete mongoose.models.Product;
+}
 
 const Product =
   (mongoose.models.Product as ProductModel) ||

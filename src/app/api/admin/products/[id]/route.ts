@@ -69,6 +69,16 @@ export async function PUT(request: Request, { params }: RouteContext) {
       taxPercent
     );
 
+    const stockQuantity =
+      updates.stockQuantity !== undefined
+        ? (typeof updates.stockQuantity === "number" && Number.isFinite(updates.stockQuantity)
+            ? Math.max(0, Math.floor(updates.stockQuantity))
+            : 0)
+        : (typeof (existing as any).stockQuantity === "number"
+            ? (existing as any).stockQuantity
+            : (existing.inStock ? 1 : 0));
+    const inStock = stockQuantity > 0;
+
     let imageUrl = updates.imageUrl ?? existing.imageUrl;
 
     if (typeof imageUrl === "string" && imageUrl.startsWith("data:")) {
@@ -94,6 +104,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
         subCategoryId,
         weight,
         imageUrl,
+        inStock,
+        stockQuantity,
         taxIncluded,
         taxPercent,
         finalPrice,
@@ -138,6 +150,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
         description: updated.description,
         imageUrl: updated.imageUrl,
         inStock: updated.inStock,
+        stockQuantity:
+          typeof (updated as any).stockQuantity === "number"
+            ? (updated as any).stockQuantity
+            : updated.inStock
+            ? 1
+            : 0,
         taxIncluded: updated.taxIncluded,
         taxPercent: updated.taxPercent,
         finalPrice: updated.finalPrice,
