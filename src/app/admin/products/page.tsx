@@ -19,6 +19,7 @@ type ProductItem = {
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  stockQuantity?: number;
   taxIncluded?: boolean;
   taxPercent?: number | null;
   finalPrice: number;
@@ -53,6 +54,7 @@ type FormState = {
   imageFile?: File | null;
   imagePreview?: string | null;
   inStock: boolean;
+  stockQuantity: string;
   taxIncluded: boolean;
   taxPercent: string;
 };
@@ -90,6 +92,7 @@ export default function AdminProductsPage() {
     imageFile: undefined,
     imagePreview: undefined,
     inStock: true,
+    stockQuantity: "0",
     taxIncluded: true,
     taxPercent: "",
   });
@@ -238,6 +241,7 @@ export default function AdminProductsPage() {
       imageFile: undefined,
       imagePreview: undefined,
       inStock: true,
+      stockQuantity: "0",
       taxIncluded: true,
       taxPercent: "",
     });
@@ -259,6 +263,12 @@ export default function AdminProductsPage() {
       imageFile: undefined,
       imagePreview: item.imageUrl ?? null,
       inStock: item.inStock,
+      stockQuantity:
+        typeof item.stockQuantity === "number"
+          ? String(item.stockQuantity)
+          : item.inStock
+          ? "1"
+          : "0",
       taxIncluded: item.taxIncluded ?? true,
       taxPercent:
         item.taxPercent !== null && item.taxPercent !== undefined
@@ -323,6 +333,18 @@ export default function AdminProductsPage() {
         throw new Error("Please enter a valid weight.");
       }
 
+      const stockQuantityNumber =
+        form.stockQuantity.trim() === ""
+          ? NaN
+          : Number.parseInt(form.stockQuantity, 10);
+      if (
+        Number.isNaN(stockQuantityNumber) ||
+        !Number.isFinite(stockQuantityNumber) ||
+        stockQuantityNumber < 0
+      ) {
+        throw new Error("Please enter a valid stock quantity (0 or more).");
+      }
+
       let taxPercentNumber: number | null = null;
       if (form.taxIncluded && form.taxPercent.trim() !== "") {
         const parsed = Number.parseFloat(
@@ -344,7 +366,8 @@ export default function AdminProductsPage() {
         unit: "grams",
         description: form.description.trim(),
         imageUrl: form.imagePreview,
-        inStock: form.inStock,
+        inStock: stockQuantityNumber > 0,
+        stockQuantity: stockQuantityNumber,
         taxIncluded: form.taxIncluded,
         taxPercent: taxPercentNumber,
       };
@@ -469,6 +492,9 @@ export default function AdminProductsPage() {
                   Final Price
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Stock Qty
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Stock
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -480,7 +506,7 @@ export default function AdminProductsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={11}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     Loading products...
@@ -489,7 +515,7 @@ export default function AdminProductsPage() {
               ) : items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={11}
                     className="px-4 py-8 text-center text-sm text-gray-500"
                   >
                     No products found. Start by adding a new product.
@@ -535,6 +561,13 @@ export default function AdminProductsPage() {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-sm text-gray-700">
+                      {typeof item.stockQuantity === "number"
+                        ? item.stockQuantity
+                        : item.inStock
+                        ? 1
+                        : 0}
                     </td>
                     <td className="px-4 py-3 align-middle">
                       <span
@@ -781,6 +814,24 @@ export default function AdminProductsPage() {
                     value={form.weight}
                     onChange={(e) =>
                       handleInputChange("weight", e.target.value)
+                    }
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                    placeholder="e.g. 10"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700">
+                    Stock Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="1"
+                    required
+                    value={form.stockQuantity}
+                    onChange={(e) =>
+                      handleInputChange("stockQuantity", e.target.value)
                     }
                     className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
                     placeholder="e.g. 10"

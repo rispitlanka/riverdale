@@ -33,6 +33,12 @@ export async function GET() {
       description: item.description,
       imageUrl: item.imageUrl,
       inStock: item.inStock,
+      stockQuantity:
+        typeof item.stockQuantity === "number"
+          ? item.stockQuantity
+          : item.inStock
+          ? 1
+          : 0,
       taxIncluded: item.taxIncluded ?? false,
       taxPercent: item.taxPercent ?? null,
       finalPrice: item.finalPrice,

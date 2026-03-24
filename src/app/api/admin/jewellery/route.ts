@@ -84,6 +84,12 @@ export async function GET() {
       description: item.description,
       imageUrl: item.imageUrl,
       inStock: item.inStock,
+      stockQuantity:
+        typeof item.stockQuantity === "number"
+          ? item.stockQuantity
+          : item.inStock
+          ? 1
+          : 0,
       taxIncluded: item.taxIncluded,
       taxPercent: item.taxPercent,
       finalPrice: item.finalPrice,
@@ -119,6 +125,7 @@ export async function POST(request: Request) {
       description,
       imageUrl,
       inStock = true,
+      stockQuantity,
       taxIncluded = true,
       taxPercent = null,
     } = body;
@@ -197,7 +204,16 @@ export async function POST(request: Request) {
       unit,
       description,
       imageUrl: finalImageUrl,
-      inStock,
+      inStock:
+        typeof stockQuantity === "number"
+          ? stockQuantity > 0
+          : Boolean(inStock),
+      stockQuantity:
+        typeof stockQuantity === "number" && Number.isFinite(stockQuantity)
+          ? Math.max(0, Math.floor(stockQuantity))
+          : inStock
+          ? 1
+          : 0,
       taxIncluded,
       taxPercent,
       finalPrice,
@@ -232,6 +248,12 @@ export async function POST(request: Request) {
         description: created.description,
         imageUrl: created.imageUrl,
         inStock: created.inStock,
+        stockQuantity:
+          typeof (created as any).stockQuantity === "number"
+            ? (created as any).stockQuantity
+            : created.inStock
+            ? 1
+            : 0,
         taxIncluded: created.taxIncluded,
         taxPercent: created.taxPercent,
         finalPrice: created.finalPrice,

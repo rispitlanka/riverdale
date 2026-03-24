@@ -14,6 +14,7 @@ export interface IMetal {
   images?: string[];
   category?: { _id: string; name: string } | string | null;
   stockStatus: "in-stock" | "out-of-stock";
+  stockQuantity?: number;
   sku?: string;
   taxIncluded?: boolean;
   taxPercent?: number | null;

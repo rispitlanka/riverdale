@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Order from "../../../../../../../lib/models/Order";
+import { reduceStockForOrder } from "@/lib/stock";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,14 @@ export async function POST(_request: Request, { params }: RouteContext) {
       return NextResponse.json(
         { message: "Order is already marked as paid.", paymentStatus: "paid" },
         { status: 200 }
+      );
+    }
+
+    const stockResult = await reduceStockForOrder(order);
+    if (!stockResult.ok) {
+      return NextResponse.json(
+        { error: stockResult.error || "Unable to reduce stock for this order" },
+        { status: 400 }
       );
     }
 

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import Order from "../../../../lib/models/Order";
 import { getStripe } from "@/lib/stripe";
 import { sendPaymentReceivedEmail } from "@/lib/mailer";
+import { reduceStockForOrder } from "@/lib/stock";
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,6 +65,14 @@ export async function POST(request: NextRequest) {
           },
         },
         { status: 200 }
+      );
+    }
+
+    const stockResult = await reduceStockForOrder(order);
+    if (!stockResult.ok) {
+      return NextResponse.json(
+        { success: false, error: stockResult.error || "Unable to reduce stock" },
+        { status: 400 }
       );
     }
 
