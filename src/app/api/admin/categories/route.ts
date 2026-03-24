@@ -67,8 +67,17 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(category, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating category", error);
+
+    if (error?.code === 11000) {
+      const duplicateField = Object.keys(error?.keyPattern ?? {})[0] ?? "field";
+      return NextResponse.json(
+        { error: `Duplicate value for ${duplicateField}. Please use a different value.` },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create category" },
       { status: 500 }

@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 
 export function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const raw = process.env.STRIPE_SECRET_KEY;
+  const key = typeof raw === "string" ? raw.split(" #")[0].trim() : undefined;
   if (!key || key.trim() === "") {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
@@ -9,9 +10,11 @@ export function getStripe(): Stripe {
 }
 
 export function getAppOrigin(): string {
+  const normalize = (value?: string) =>
+    typeof value === "string" ? value.split(" #")[0].trim() : "";
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.VERCEL_URL ||
+    normalize(process.env.NEXT_PUBLIC_APP_URL) ||
+    normalize(process.env.VERCEL_URL) ||
     "http://localhost:3000";
   return baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
 }

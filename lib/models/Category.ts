@@ -28,7 +28,7 @@ const CategorySchema = new Schema<CategoryDocument>(
       type: String,
       trim: true,
       lowercase: true,
-      default: null,
+      default: undefined,
     },
     description: {
       type: String,

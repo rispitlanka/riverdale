@@ -2,7 +2,12 @@ import nodemailer from "nodemailer";
 
 function env(name: string): string | undefined {
   const v = process.env[name];
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
+  if (typeof v !== "string") return undefined;
+  const trimmed = v.trim();
+  if (trimmed === "") return undefined;
+  // Allow users to keep inline comments in .env values: VALUE  # comment
+  const withoutInlineComment = trimmed.split(" #")[0].trim();
+  return withoutInlineComment !== "" ? withoutInlineComment : undefined;
 }
 
 function parseBool(value: string | undefined, fallback: boolean): boolean {

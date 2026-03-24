@@ -116,11 +116,13 @@ export async function POST(request: Request, { params }: RouteContext) {
         paymentUrl: session.url,
         expiresInMinutes: PAYMENT_LINK_EXPIRY_MINUTES,
       });
-    } catch (mailErr) {
+    } catch (mailErr: unknown) {
       console.error("Failed to send payment link email", mailErr);
+      const reason =
+        mailErr instanceof Error ? mailErr.message : "Unknown email error";
       return NextResponse.json(
         {
-          error: "Checkout link was created but the email could not be sent. Copy the link below or fix SMTP settings.",
+          error: `Checkout link was created but the email could not be sent. ${reason}`,
           checkoutUrl: session.url,
         },
         { status: 502 }
