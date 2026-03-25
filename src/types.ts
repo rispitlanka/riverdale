@@ -18,6 +18,8 @@ export interface IMetal {
   sku?: string;
   taxIncluded?: boolean;
   taxPercent?: number | null;
+  /** Set for catalogue items so checkout can map to the correct collection. */
+  kind?: 'jewellery' | 'product';
 }
 
 export interface ITimeSlot {

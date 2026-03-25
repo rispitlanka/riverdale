@@ -213,8 +213,12 @@ export default function ProductsPage() {
                       <Button
                         onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.preventDefault();
-                          addToCart(metal, 1);
-                          toast.success(`${metal.name} added to cart!`);
+                          const addedAll = addToCart(metal, 1);
+                          if (addedAll) {
+                            toast.success(`${metal.name} added to cart!`);
+                          } else {
+                            toast.error('Maximum quantity in cart for this item (stock limit).');
+                          }
                         }}
                         disabled={metal.stockStatus !== 'in-stock'}
                         className="w-full bg-[#FBC02E] hover:bg-[#E5AD1F] text-foreground font-semibold shadow-none"

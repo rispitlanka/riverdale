@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Order from "../../../../lib/models/Order";
+import Product from "../../../../lib/models/Product";
+import Jewellery from "../../../../lib/models/Jewellery";
 import { Types } from "mongoose";
 import { sendOrderPlacedEmail } from "@/lib/mailer";
 
@@ -42,6 +44,50 @@ export async function POST(request: NextRequest) {
         { error: "Customer name, email and phone are required" },
         { status: 400 }
       );
+    }
+
+    for (const raw of items) {
+      const kind =
+        raw?.kind === "jewellery" || raw?.kind === "product" ? raw.kind : "product";
+      const qty = Math.floor(Number(raw?.quantity) || 0);
+      if (qty < 1) {
+        return NextResponse.json(
+          { error: "Each item must have a valid quantity" },
+          { status: 400 }
+        );
+      }
+
+      let available = 0;
+      try {
+        const doc =
+          kind === "jewellery"
+            ? await Jewellery.findById(raw._id).select("stockQuantity inStock").lean()
+            : await Product.findById(raw._id).select("stockQuantity inStock").lean();
+        if (doc) {
+          const row = doc as { stockQuantity?: number; inStock?: boolean };
+          available =
+            typeof row.stockQuantity === "number"
+              ? Math.max(0, Math.floor(row.stockQuantity))
+              : row.inStock
+                ? 1
+                : 0;
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid product in cart" },
+          { status: 400 }
+        );
+      }
+
+      if (qty > available) {
+        const name = typeof raw?.name === "string" ? raw.name : "This item";
+        return NextResponse.json(
+          {
+            error: `${name}: only ${available} available in stock (you requested ${qty}).`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const shippingAddress = customerInfo

@@ -2,10 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, IMetal } from '@/types';
+import { getMaxCartQuantityForItem } from '@/lib/cartStock';
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (metal: IMetal, quantity?: number) => void;
+  /** Returns true only if the full requested quantity was added (not capped by stock). */
+  addToCart: (metal: IMetal, quantity?: number) => boolean;
   removeFromCart: (metalId: string) => void;
   updateQuantity: (metalId: string, quantity: number) => void;
   clearCart: () => void;
@@ -36,20 +38,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('shopping-cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (metal: IMetal, quantity: number = 1) => {
+  const addToCart = (metal: IMetal, quantity: number = 1): boolean => {
+    const maxForLine = getMaxCartQuantityForItem(metal);
+    const outcome = { allRequestedAdded: true };
+
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item._id === metal._id);
-      
+      const currentQty = existingItem?.quantity ?? 0;
+      const desiredTotal = currentQty + quantity;
+      const nextQty = Math.min(desiredTotal, maxForLine);
+
+      outcome.allRequestedAdded = nextQty >= desiredTotal;
+
       if (existingItem) {
         return prevCart.map((item) =>
-          item._id === metal._id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+          item._id === metal._id ? { ...item, quantity: nextQty } : item
         );
       }
-      
-      return [...prevCart, { ...metal, quantity }];
+
+      if (nextQty < 1) {
+        outcome.allRequestedAdded = false;
+        return prevCart;
+      }
+
+      return [...prevCart, { ...metal, quantity: nextQty }];
     });
+
+    return outcome.allRequestedAdded;
   };
 
   const removeFromCart = (metalId: string) => {
@@ -61,12 +76,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(metalId);
       return;
     }
-    
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item._id === metalId ? { ...item, quantity } : item
-      )
-    );
+
+    setCart((prevCart) => {
+      const item = prevCart.find((i) => i._id === metalId);
+      if (!item) return prevCart;
+
+      const maxForLine = getMaxCartQuantityForItem(item);
+      const nextQty = Math.min(Math.max(1, Math.floor(quantity)), maxForLine);
+
+      if (nextQty < 1) {
+        return prevCart.filter((i) => i._id !== metalId);
+      }
+
+      return prevCart.map((i) =>
+        i._id === metalId ? { ...i, quantity: nextQty } : i
+      );
+    });
   };
 
   const clearCart = () => {

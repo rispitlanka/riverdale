@@ -28,12 +28,19 @@ interface IJewelleryItem {
   description?: string;
   imageUrl?: string;
   inStock: boolean;
+  stockQuantity?: number;
   taxIncluded: boolean;
   taxPercent?: number | null;
   finalPrice: number;
 }
 
 function jewelleryToCartItem(item: IJewelleryItem): IMetal {
+  const stockQuantity =
+    typeof item.stockQuantity === 'number'
+      ? item.stockQuantity
+      : item.inStock
+        ? 1
+        : 0;
   return {
     _id: item.id,
     name: item.name,
@@ -45,6 +52,8 @@ function jewelleryToCartItem(item: IJewelleryItem): IMetal {
     images: item.imageUrl ? [item.imageUrl] : [],
     description: item.description,
     stockStatus: item.inStock ? 'in-stock' : 'out-of-stock',
+    stockQuantity,
+    kind: 'jewellery',
     category: item.categoryId
       ? { _id: item.categoryId, name: item.categoryName ?? '' }
       : null,
@@ -260,8 +269,12 @@ export default function JewelleryPage() {
 
                   <Button
                     onClick={() => {
-                      addToCart(jewelleryToCartItem(item), 1);
-                      toast.success(`${item.name} added to cart!`);
+                      const addedAll = addToCart(jewelleryToCartItem(item), 1);
+                      if (addedAll) {
+                        toast.success(`${item.name} added to cart!`);
+                      } else {
+                        toast.error('Maximum quantity in cart for this item (stock limit).');
+                      }
                     }}
                     disabled={!item.inStock}
                     className="w-full bg-[#FBC02E] hover:bg-[#E5AD1F] text-foreground font-semibold shadow-none"

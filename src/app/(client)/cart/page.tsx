@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { getMaxCartQuantityForItem, itemHasStockLimit } from '@/lib/cartStock';
 
 export default function CartPage() {
   const router = useRouter();
@@ -33,12 +34,23 @@ export default function CartPage() {
   const shippingCost = subtotal > 1000 ? 0 : 25; // Free shipping over $1000
   const total = subtotal + tax + shippingCost;
 
-  const handleQuantityChange = (metalId: string, newQuantity: number) => {
+  const handleQuantityChange = (
+    item: (typeof cart)[number],
+    newQuantity: number
+  ) => {
     if (newQuantity < 1) {
-      removeFromCart(metalId);
-    } else {
-      updateQuantity(metalId, newQuantity);
+      removeFromCart(item._id);
+      return;
     }
+
+    const maxQty = getMaxCartQuantityForItem(item);
+    if (newQuantity > maxQty) {
+      toast.error(`You can order up to ${maxQty} in stock for this item.`);
+      updateQuantity(item._id, maxQty);
+      return;
+    }
+
+    updateQuantity(item._id, newQuantity);
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -267,7 +279,15 @@ export default function CartPage() {
                   )}
                   <div className="flex-1">
                     <div className="text-foreground font-semibold">{item.name}</div>
-                    <div className="text-sm text-muted-foreground">Qty: {item.quantity}</div>
+                    {item.sku ? (
+                      <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>
+                    ) : null}
+                    <div className="text-sm text-muted-foreground">
+                      Qty: {item.quantity}
+                      {itemHasStockLimit(item) ? (
+                        <span className="text-muted-foreground/80"> / {getMaxCartQuantityForItem(item)} max</span>
+                      ) : null}
+                    </div>
                     <div className="text-sm text-[#9A0156]">
                       {formatCurrency(item.pricePerGram * item.weight * item.quantity)}
                     </div>
@@ -330,27 +350,37 @@ export default function CartPage() {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-foreground mb-1">{item.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{item.purity} • {item.weight}{item.weightUnit}</p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm text-muted-foreground">SKU:</span>
-                      <span className="text-sm text-foreground">{item.sku}</span>
-                    </div>
+                    {item.sku ? (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-muted-foreground">SKU:</span>
+                        <span className="text-sm text-foreground">{item.sku}</span>
+                      </div>
+                    ) : null}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
-                        >
-                          -
-                        </Button>
-                        <span className="text-foreground font-semibold w-8 text-center">{item.quantity}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
-                        >
-                          +
-                        </Button>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                          >
+                            -
+                          </Button>
+                          <span className="text-foreground font-semibold w-8 text-center">{item.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={item.quantity >= getMaxCartQuantityForItem(item)}
+                            onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                          >
+                            +
+                          </Button>
+                        </div>
+                        {itemHasStockLimit(item) ? (
+                          <span className="text-xs text-muted-foreground">
+                            {getMaxCartQuantityForItem(item)} in stock
+                          </span>
+                        ) : null}
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-[#9A0156]">
@@ -406,11 +436,11 @@ export default function CartPage() {
                   <span>Shipping</span>
                   <span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span>
                 </div>
-                {subtotal > 1000 && (
+                {/* {subtotal > 1000 && (
                   <div className="text-sm text-green-600 dark:text-green-400">
                     ✓ Free shipping on orders over $1,000
                   </div>
-                )}
+                )} */}
               </div>
               <div className="pt-4 border-t border-border">
                 <div className="flex justify-between text-xl font-bold text-foreground mb-4">

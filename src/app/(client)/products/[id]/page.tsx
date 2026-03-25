@@ -232,8 +232,12 @@ export default function ProductDetailPage() {
           {/* Add to Cart Button */}
           <Button
             onClick={() => {
-              addToCart(product, 1);
-              toast.success(`${product.name} added to cart!`);
+              const addedAll = addToCart(product, 1);
+              if (addedAll) {
+                toast.success(`${product.name} added to cart!`);
+              } else {
+                toast.error('Maximum quantity in cart for this item (stock limit).');
+              }
             }}
             disabled={product.stockStatus !== 'in-stock'}
             className="w-full bg-[#FBC02E] hover:bg-[#E5AD1F] text-foreground font-semibold text-lg py-6"
